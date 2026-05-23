@@ -22,6 +22,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedResultsAttemptIdRouteImport } from './routes/_authenticated/results.$attemptId'
 import { Route as AuthenticatedExamAttemptIdRouteImport } from './routes/_authenticated/exam.$attemptId'
 import { Route as AuthenticatedCoursesCodeRouteImport } from './routes/_authenticated/courses.$code'
+import { Route as AuthenticatedAdminExamExamIdRouteImport } from './routes/_authenticated/admin.exam.$examId'
 
 const NotesRoute = NotesRouteImport.update({
   id: '/notes',
@@ -90,6 +91,12 @@ const AuthenticatedCoursesCodeRoute =
     path: '/courses/$code',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAdminExamExamIdRoute =
+  AuthenticatedAdminExamExamIdRouteImport.update({
+    id: '/exam/$examId',
+    path: '/exam/$examId',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -97,13 +104,14 @@ export interface FileRoutesByFullPath {
   '/donate': typeof DonateRoute
   '/exams': typeof ExamsRoute
   '/notes': typeof NotesRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/chat': typeof AuthenticatedChatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/take/$examId': typeof TakeExamIdRoute
   '/courses/$code': typeof AuthenticatedCoursesCodeRoute
   '/exam/$attemptId': typeof AuthenticatedExamAttemptIdRoute
   '/results/$attemptId': typeof AuthenticatedResultsAttemptIdRoute
+  '/admin/exam/$examId': typeof AuthenticatedAdminExamExamIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -111,13 +119,14 @@ export interface FileRoutesByTo {
   '/donate': typeof DonateRoute
   '/exams': typeof ExamsRoute
   '/notes': typeof NotesRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/chat': typeof AuthenticatedChatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/take/$examId': typeof TakeExamIdRoute
   '/courses/$code': typeof AuthenticatedCoursesCodeRoute
   '/exam/$attemptId': typeof AuthenticatedExamAttemptIdRoute
   '/results/$attemptId': typeof AuthenticatedResultsAttemptIdRoute
+  '/admin/exam/$examId': typeof AuthenticatedAdminExamExamIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -127,13 +136,14 @@ export interface FileRoutesById {
   '/donate': typeof DonateRoute
   '/exams': typeof ExamsRoute
   '/notes': typeof NotesRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/chat': typeof AuthenticatedChatRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/take/$examId': typeof TakeExamIdRoute
   '/_authenticated/courses/$code': typeof AuthenticatedCoursesCodeRoute
   '/_authenticated/exam/$attemptId': typeof AuthenticatedExamAttemptIdRoute
   '/_authenticated/results/$attemptId': typeof AuthenticatedResultsAttemptIdRoute
+  '/_authenticated/admin/exam/$examId': typeof AuthenticatedAdminExamExamIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/courses/$code'
     | '/exam/$attemptId'
     | '/results/$attemptId'
+    | '/admin/exam/$examId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/courses/$code'
     | '/exam/$attemptId'
     | '/results/$attemptId'
+    | '/admin/exam/$examId'
   id:
     | '__root__'
     | '/'
@@ -179,6 +191,7 @@ export interface FileRouteTypes {
     | '/_authenticated/courses/$code'
     | '/_authenticated/exam/$attemptId'
     | '/_authenticated/results/$attemptId'
+    | '/_authenticated/admin/exam/$examId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -284,11 +297,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCoursesCodeRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/admin/exam/$examId': {
+      id: '/_authenticated/admin/exam/$examId'
+      path: '/exam/$examId'
+      fullPath: '/admin/exam/$examId'
+      preLoaderRoute: typeof AuthenticatedAdminExamExamIdRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminExamExamIdRoute: typeof AuthenticatedAdminExamExamIdRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminExamExamIdRoute: AuthenticatedAdminExamExamIdRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+
 interface AuthenticatedRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedChatRoute: typeof AuthenticatedChatRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedCoursesCodeRoute: typeof AuthenticatedCoursesCodeRoute
@@ -297,7 +328,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedChatRoute: AuthenticatedChatRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedCoursesCodeRoute: AuthenticatedCoursesCodeRoute,
@@ -321,3 +352,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
