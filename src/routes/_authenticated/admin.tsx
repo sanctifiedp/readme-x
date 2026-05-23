@@ -322,7 +322,7 @@ function NotesTab() {
   const [uploading, setUploading] = useState(false);
 
   const createMut = useMutation({
-    mutationFn: (d: Parameters<typeof createFn>[0]["data"]) => createFn({ data: d }),
+    mutationFn: (d: { title: string; description?: string; school?: string; department?: string; level?: string; courseCode?: string; link?: string; filePath?: string }) => createFn({ data: d }),
     onSuccess: () => { toast.success("Note added"); refresh(); },
     onError: (e: Error) => toast.error(e.message),
   });
