@@ -67,9 +67,10 @@ function ExamEditor() {
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
       <main className="flex-1 container mx-auto px-4 py-8 max-w-4xl space-y-6">
-        <Link to="/_authenticated/admin" className="inline-flex items-center text-sm text-muted-foreground hover:text-primary">
+        <Link to="/admin" className="inline-flex items-center text-sm text-muted-foreground hover:text-primary">
           <ArrowLeft className="h-4 w-4 mr-1" /> Back to admin
         </Link>
+
         <div>
           <h1 className="text-3xl font-bold">{data!.exam.title}</h1>
           <p className="text-sm text-muted-foreground mt-1">
