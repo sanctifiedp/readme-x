@@ -54,8 +54,11 @@ function AuthPage() {
     const password = String(fd.get("password"));
     const full_name = String(fd.get("full_name"));
     const matric_no = String(fd.get("matric_no"));
+    const school = String(fd.get("school") ?? "");
+    const department = String(fd.get("department") ?? "");
+    const level = String(fd.get("level") ?? "");
 
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -63,14 +66,20 @@ function AuthPage() {
         data: { full_name, matric_no },
       },
     });
-    setLoading(false);
     if (error) {
+      setLoading(false);
       toast.error(error.message);
       return;
     }
+    // Best-effort: write school/department/level to profile if a session exists
+    if (signUpData.session) {
+      await supabase.from("profiles").update({ school, department, level }).eq("id", signUpData.user!.id);
+    }
+    setLoading(false);
     toast.success("Account created. Check your email to verify, then sign in.");
     setTab("signin");
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-muted/30">
@@ -116,6 +125,24 @@ function AuthPage() {
                   <Input id="su-matric" name="matric_no" />
                 </div>
                 <div className="space-y-1.5">
+                  <Label htmlFor="su-matric">Matric / Student number</Label>
+                  <Input id="su-matric" name="matric_no" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="su-school">School</Label>
+                    <Input id="su-school" name="school" placeholder="e.g. University of Lagos" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="su-level">Level</Label>
+                    <Input id="su-level" name="level" placeholder="100" />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="su-dept">Department</Label>
+                  <Input id="su-dept" name="department" placeholder="e.g. Computer Science" />
+                </div>
+                <div className="space-y-1.5">
                   <Label htmlFor="su-email">Email</Label>
                   <Input id="su-email" name="email" type="email" required autoComplete="email" />
                 </div>
@@ -123,6 +150,7 @@ function AuthPage() {
                   <Label htmlFor="su-pw">Password</Label>
                   <Input id="su-pw" name="password" type="password" required minLength={6} autoComplete="new-password" />
                 </div>
+
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Create account
                 </Button>
