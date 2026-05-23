@@ -63,9 +63,10 @@ function AuthPage() {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/dashboard`,
-        data: { full_name, matric_no },
+        data: { full_name, matric_no, school, department, level },
       },
     });
+
     if (error) {
       setLoading(false);
       toast.error(error.message);
