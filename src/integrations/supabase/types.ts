@@ -174,7 +174,7 @@ export type Database = {
       }
       exam_attempts: {
         Row: {
-          course_id: string
+          course_id: string | null
           exam_id: string | null
           id: string
           question_ids: Json
@@ -185,7 +185,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          course_id: string
+          course_id?: string | null
           exam_id?: string | null
           id?: string
           question_ids: Json
@@ -196,7 +196,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          course_id?: string
+          course_id?: string | null
           exam_id?: string | null
           id?: string
           question_ids?: Json
@@ -345,7 +345,7 @@ export type Database = {
       questions: {
         Row: {
           correct_index: number
-          course_id: string
+          course_id: string | null
           created_at: string
           exam_id: string | null
           id: string
@@ -355,7 +355,7 @@ export type Database = {
         }
         Insert: {
           correct_index: number
-          course_id: string
+          course_id?: string | null
           created_at?: string
           exam_id?: string | null
           id?: string
@@ -365,7 +365,7 @@ export type Database = {
         }
         Update: {
           correct_index?: number
-          course_id?: string
+          course_id?: string | null
           created_at?: string
           exam_id?: string | null
           id?: string
