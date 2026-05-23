@@ -133,9 +133,49 @@ export type Database = {
         }
         Relationships: []
       }
+      donations: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          donor_name: string
+          id: string
+          message: string | null
+          reference: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          donor_name: string
+          id?: string
+          message?: string | null
+          reference?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          donor_name?: string
+          id?: string
+          message?: string | null
+          reference?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       exam_attempts: {
         Row: {
-          course_id: string
+          course_id: string | null
+          exam_id: string | null
           id: string
           question_ids: Json
           score: number | null
@@ -145,7 +185,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          course_id: string
+          course_id?: string | null
+          exam_id?: string | null
           id?: string
           question_ids: Json
           score?: number | null
@@ -155,7 +196,8 @@ export type Database = {
           user_id: string
         }
         Update: {
-          course_id?: string
+          course_id?: string | null
+          exam_id?: string | null
           id?: string
           question_ids?: Json
           score?: number | null
@@ -172,37 +214,140 @@ export type Database = {
             referencedRelation: "courses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "exam_attempts_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      exams: {
+        Row: {
+          course_id: string | null
+          created_at: string
+          created_by: string | null
+          department: string | null
+          description: string | null
+          id: string
+          level: string | null
+          school: string | null
+          title: string
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          description?: string | null
+          id?: string
+          level?: string | null
+          school?: string | null
+          title: string
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          description?: string | null
+          id?: string
+          level?: string | null
+          school?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exams_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notes: {
+        Row: {
+          course_code: string | null
+          created_at: string
+          department: string | null
+          description: string | null
+          file_path: string | null
+          id: string
+          level: string | null
+          link: string | null
+          school: string | null
+          title: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          course_code?: string | null
+          created_at?: string
+          department?: string | null
+          description?: string | null
+          file_path?: string | null
+          id?: string
+          level?: string | null
+          link?: string | null
+          school?: string | null
+          title: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          course_code?: string | null
+          created_at?: string
+          department?: string | null
+          description?: string | null
+          file_path?: string | null
+          id?: string
+          level?: string | null
+          link?: string | null
+          school?: string | null
+          title?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
           created_at: string
+          department: string | null
           email: string | null
           full_name: string | null
           id: string
+          level: string | null
           matric_no: string | null
+          school: string | null
         }
         Insert: {
           created_at?: string
+          department?: string | null
           email?: string | null
           full_name?: string | null
           id: string
+          level?: string | null
           matric_no?: string | null
+          school?: string | null
         }
         Update: {
           created_at?: string
+          department?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          level?: string | null
           matric_no?: string | null
+          school?: string | null
         }
         Relationships: []
       }
       questions: {
         Row: {
           correct_index: number
-          course_id: string
+          course_id: string | null
           created_at: string
+          exam_id: string | null
           id: string
           options: Json
           prompt: string
@@ -210,8 +355,9 @@ export type Database = {
         }
         Insert: {
           correct_index: number
-          course_id: string
+          course_id?: string | null
           created_at?: string
+          exam_id?: string | null
           id?: string
           options: Json
           prompt: string
@@ -219,8 +365,9 @@ export type Database = {
         }
         Update: {
           correct_index?: number
-          course_id?: string
+          course_id?: string | null
           created_at?: string
+          exam_id?: string | null
           id?: string
           options?: Json
           prompt?: string
@@ -232,6 +379,13 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "questions_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
             referencedColumns: ["id"]
           },
           {

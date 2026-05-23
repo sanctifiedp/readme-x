@@ -9,16 +9,36 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as NotesRouteImport } from './routes/notes'
+import { Route as ExamsRouteImport } from './routes/exams'
+import { Route as DonateRouteImport } from './routes/donate'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TakeExamIdRouteImport } from './routes/take.$examId'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedResultsAttemptIdRouteImport } from './routes/_authenticated/results.$attemptId'
 import { Route as AuthenticatedExamAttemptIdRouteImport } from './routes/_authenticated/exam.$attemptId'
 import { Route as AuthenticatedCoursesCodeRouteImport } from './routes/_authenticated/courses.$code'
+import { Route as AuthenticatedAdminExamExamIdRouteImport } from './routes/_authenticated/admin.exam.$examId'
 
+const NotesRoute = NotesRouteImport.update({
+  id: '/notes',
+  path: '/notes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExamsRoute = ExamsRouteImport.update({
+  id: '/exams',
+  path: '/exams',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DonateRoute = DonateRouteImport.update({
+  id: '/donate',
+  path: '/donate',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -31,6 +51,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TakeExamIdRoute = TakeExamIdRouteImport.update({
+  id: '/take/$examId',
+  path: '/take/$examId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -66,81 +91,142 @@ const AuthenticatedCoursesCodeRoute =
     path: '/courses/$code',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAdminExamExamIdRoute =
+  AuthenticatedAdminExamExamIdRouteImport.update({
+    id: '/exam/$examId',
+    path: '/exam/$examId',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/donate': typeof DonateRoute
+  '/exams': typeof ExamsRoute
+  '/notes': typeof NotesRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/chat': typeof AuthenticatedChatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/take/$examId': typeof TakeExamIdRoute
   '/courses/$code': typeof AuthenticatedCoursesCodeRoute
   '/exam/$attemptId': typeof AuthenticatedExamAttemptIdRoute
   '/results/$attemptId': typeof AuthenticatedResultsAttemptIdRoute
+  '/admin/exam/$examId': typeof AuthenticatedAdminExamExamIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/donate': typeof DonateRoute
+  '/exams': typeof ExamsRoute
+  '/notes': typeof NotesRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/chat': typeof AuthenticatedChatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/take/$examId': typeof TakeExamIdRoute
   '/courses/$code': typeof AuthenticatedCoursesCodeRoute
   '/exam/$attemptId': typeof AuthenticatedExamAttemptIdRoute
   '/results/$attemptId': typeof AuthenticatedResultsAttemptIdRoute
+  '/admin/exam/$examId': typeof AuthenticatedAdminExamExamIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/donate': typeof DonateRoute
+  '/exams': typeof ExamsRoute
+  '/notes': typeof NotesRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/chat': typeof AuthenticatedChatRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/take/$examId': typeof TakeExamIdRoute
   '/_authenticated/courses/$code': typeof AuthenticatedCoursesCodeRoute
   '/_authenticated/exam/$attemptId': typeof AuthenticatedExamAttemptIdRoute
   '/_authenticated/results/$attemptId': typeof AuthenticatedResultsAttemptIdRoute
+  '/_authenticated/admin/exam/$examId': typeof AuthenticatedAdminExamExamIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
+    | '/donate'
+    | '/exams'
+    | '/notes'
     | '/admin'
     | '/chat'
     | '/dashboard'
+    | '/take/$examId'
     | '/courses/$code'
     | '/exam/$attemptId'
     | '/results/$attemptId'
+    | '/admin/exam/$examId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/donate'
+    | '/exams'
+    | '/notes'
     | '/admin'
     | '/chat'
     | '/dashboard'
+    | '/take/$examId'
     | '/courses/$code'
     | '/exam/$attemptId'
     | '/results/$attemptId'
+    | '/admin/exam/$examId'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/donate'
+    | '/exams'
+    | '/notes'
     | '/_authenticated/admin'
     | '/_authenticated/chat'
     | '/_authenticated/dashboard'
+    | '/take/$examId'
     | '/_authenticated/courses/$code'
     | '/_authenticated/exam/$attemptId'
     | '/_authenticated/results/$attemptId'
+    | '/_authenticated/admin/exam/$examId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
+  DonateRoute: typeof DonateRoute
+  ExamsRoute: typeof ExamsRoute
+  NotesRoute: typeof NotesRoute
+  TakeExamIdRoute: typeof TakeExamIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/notes': {
+      id: '/notes'
+      path: '/notes'
+      fullPath: '/notes'
+      preLoaderRoute: typeof NotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/exams': {
+      id: '/exams'
+      path: '/exams'
+      fullPath: '/exams'
+      preLoaderRoute: typeof ExamsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/donate': {
+      id: '/donate'
+      path: '/donate'
+      fullPath: '/donate'
+      preLoaderRoute: typeof DonateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -160,6 +246,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/take/$examId': {
+      id: '/take/$examId'
+      path: '/take/$examId'
+      fullPath: '/take/$examId'
+      preLoaderRoute: typeof TakeExamIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/dashboard': {
@@ -204,11 +297,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCoursesCodeRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/admin/exam/$examId': {
+      id: '/_authenticated/admin/exam/$examId'
+      path: '/exam/$examId'
+      fullPath: '/admin/exam/$examId'
+      preLoaderRoute: typeof AuthenticatedAdminExamExamIdRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminExamExamIdRoute: typeof AuthenticatedAdminExamExamIdRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminExamExamIdRoute: AuthenticatedAdminExamExamIdRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+
 interface AuthenticatedRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedChatRoute: typeof AuthenticatedChatRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedCoursesCodeRoute: typeof AuthenticatedCoursesCodeRoute
@@ -217,7 +328,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedChatRoute: AuthenticatedChatRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedCoursesCodeRoute: AuthenticatedCoursesCodeRoute,
@@ -233,6 +344,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
+  DonateRoute: DonateRoute,
+  ExamsRoute: ExamsRoute,
+  NotesRoute: NotesRoute,
+  TakeExamIdRoute: TakeExamIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
