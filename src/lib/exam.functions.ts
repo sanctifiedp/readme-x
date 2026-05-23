@@ -46,7 +46,7 @@ export const getAttempt = createServerFn({ method: "POST" })
     const { userId } = context;
     const { data: attempt, error } = await supabaseAdmin
       .from("exam_attempts")
-      .select("*, courses(code, title)")
+      .select("*, courses(code, title), exams(title)")
       .eq("id", data.attemptId)
       .eq("user_id", userId)
       .single();
@@ -58,7 +58,6 @@ export const getAttempt = createServerFn({ method: "POST" })
       .select("id, prompt, options")
       .in("id", ids);
 
-    // Order questions to match question_ids order
     const ordered = ids
       .map((id) => questions?.find((q) => q.id === id))
       .filter(Boolean) as Array<{ id: string; prompt: string; options: unknown }>;
@@ -67,7 +66,7 @@ export const getAttempt = createServerFn({ method: "POST" })
       attempt: {
         id: attempt.id,
         courseCode: attempt.courses?.code ?? "",
-        courseTitle: attempt.courses?.title ?? "",
+        courseTitle: attempt.exams?.title ?? attempt.courses?.title ?? "Exam",
         submittedAt: attempt.submitted_at,
         score: attempt.score,
         total: attempt.total,
@@ -79,6 +78,7 @@ export const getAttempt = createServerFn({ method: "POST" })
       })),
     };
   });
+
 
 export const submitAttempt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -144,7 +144,7 @@ export const getResults = createServerFn({ method: "POST" })
     const { userId } = context;
     const { data: attempt, error } = await supabaseAdmin
       .from("exam_attempts")
-      .select("*, courses(code, title)")
+      .select("*, courses(code, title), exams(title)")
       .eq("id", data.attemptId)
       .eq("user_id", userId)
       .single();
@@ -164,11 +164,12 @@ export const getResults = createServerFn({ method: "POST" })
       attempt: {
         id: attempt.id,
         courseCode: attempt.courses?.code ?? "",
-        courseTitle: attempt.courses?.title ?? "",
+        courseTitle: attempt.exams?.title ?? attempt.courses?.title ?? "Exam",
         score: attempt.score,
         total: attempt.total,
         submittedAt: attempt.submitted_at,
       },
+
       questions: ids.map((id) => {
         const q = questions?.find((x) => x.id === id);
         const a = answers?.find((x) => x.question_id === id);
