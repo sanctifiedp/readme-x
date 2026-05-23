@@ -124,10 +124,6 @@ function AuthPage() {
                   <Label htmlFor="su-matric">Matric / Student number</Label>
                   <Input id="su-matric" name="matric_no" />
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="su-matric">Matric / Student number</Label>
-                  <Input id="su-matric" name="matric_no" />
-                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="su-school">School</Label>
