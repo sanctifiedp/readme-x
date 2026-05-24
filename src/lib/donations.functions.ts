@@ -9,29 +9,33 @@ async function assertAdmin(userId: string) {
   if (!data) throw new Error("Forbidden: admin only");
 }
 
-// Public: approved donors deduplicated, sorted by donation count desc.
+// Public: approved donors deduplicated, sorted by total amount donated desc.
+// Amounts themselves are NEVER returned to the public — only used server-side to rank.
 export const listDonors = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabaseAdmin
     .from("donations")
-    .select("donor_name, message, approved_at")
+    .select("donor_name, amount, message, approved_at")
     .eq("status", "approved")
     .order("approved_at", { ascending: false });
   if (error) throw new Error(error.message);
 
-  const map = new Map<string, { name: string; count: number; lastAt: string; message: string | null }>();
+  const map = new Map<string, { name: string; count: number; total: number; lastAt: string; message: string | null }>();
   for (const d of data ?? []) {
     const key = d.donor_name.trim().toLowerCase();
+    const amt = Number(d.amount) || 0;
     const ex = map.get(key);
     if (ex) {
       ex.count += 1;
+      ex.total += amt;
       if (!ex.message && d.message) ex.message = d.message;
     } else {
-      map.set(key, { name: d.donor_name.trim(), count: 1, lastAt: d.approved_at ?? "", message: d.message });
+      map.set(key, { name: d.donor_name.trim(), count: 1, total: amt, lastAt: d.approved_at ?? "", message: d.message });
     }
   }
-  const donors = Array.from(map.values()).sort((a, b) =>
-    b.count - a.count || a.name.localeCompare(b.name),
-  );
+  // Sort by total amount desc, then by count desc, then by name. Strip total before returning.
+  const donors = Array.from(map.values())
+    .sort((a, b) => b.total - a.total || b.count - a.count || a.name.localeCompare(b.name))
+    .map(({ name, count, lastAt, message }) => ({ name, count, lastAt, message }));
   return { donors, total: data?.length ?? 0, uniqueCount: donors.length };
 });
 
