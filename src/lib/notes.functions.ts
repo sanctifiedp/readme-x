@@ -27,20 +27,32 @@ export const listNotes = createServerFn({ method: "POST" })
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
 
-    return (rows ?? []).map((n) => ({
-      id: n.id,
-      title: n.title,
-      description: n.description,
-      school: n.school,
-      department: n.department,
-      level: n.level,
-      courseCode: n.course_code,
-      link: n.link,
-      fileUrl: n.file_path
-        ? supabaseAdmin.storage.from("notes").getPublicUrl(n.file_path).data.publicUrl
-        : null,
-      createdAt: n.created_at,
-    }));
+    const rows = data ?? [];
+    const signed = await Promise.all(
+      rows.map(async (n) => {
+        let fileUrl: string | null = null;
+        if (n.file_path) {
+          const { data: s } = await supabaseAdmin.storage
+            .from("notes")
+            .createSignedUrl(n.file_path, 60 * 60);
+          fileUrl = s?.signedUrl ?? null;
+        }
+        return {
+          id: n.id,
+          title: n.title,
+          description: n.description,
+          school: n.school,
+          department: n.department,
+          level: n.level,
+          courseCode: n.course_code,
+          link: n.link,
+          fileUrl,
+          createdAt: n.created_at,
+        };
+      }),
+    );
+    return signed;
+
   });
 
 export const createNote = createServerFn({ method: "POST" })
