@@ -52,7 +52,7 @@ export const updateRoom = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
-    const patch: Record<string, unknown> = {};
+    const patch: { name?: string; description?: string; is_archived?: boolean } = {};
     if (data.name !== undefined) patch.name = data.name;
     if (data.description !== undefined) patch.description = data.description;
     if (data.isArchived !== undefined) patch.is_archived = data.isArchived;
