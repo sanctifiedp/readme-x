@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
@@ -6,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SiteHeader } from "@/components/SiteHeader";
 import { supabase } from "@/integrations/supabase/client";
+import { getChatProfileNames } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/chat")({
   head: () => ({
@@ -13,6 +15,7 @@ export const Route = createFileRoute("/_authenticated/chat")({
   }),
   component: ChatPage,
 });
+
 
 type Msg = { id: string; body: string; user_id: string; created_at: string; full_name?: string | null };
 
