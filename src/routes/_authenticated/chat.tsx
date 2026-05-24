@@ -27,9 +27,12 @@ function ChatPage() {
   const [sending, setSending] = useState(false);
   const profilesCache = useRef<Map<string, string>>(new Map());
   const endRef = useRef<HTMLDivElement>(null);
+  const fetchNames = useServerFn(getChatProfileNames);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setMe(data.user?.id ?? null));
+
+
 
     (async () => {
       const { data: msgs } = await supabase
