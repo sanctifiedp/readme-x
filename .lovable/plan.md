@@ -1,64 +1,44 @@
-## ReadMe — CBT Exam Platform (clone of PRESIDO-CBT, rebranded)
+## Changes
 
-Rebuilding from scratch since the original project isn't in your workspace. New name: **ReadMe**. New brand: **blue** palette (replacing green).
+### 1. Donor list sorted by total amount donated
+Update `listDonors` in `src/lib/donations.functions.ts` to sum each donor's approved donation amounts and sort by that total (descending). The public list still hides individual amounts — only the order changes. Public donor wall in `src/routes/donate.tsx` continues showing name + donation count.
 
-### Tech foundation
+### 2. Multiple chat rooms with admin moderation
+**Database** (migration):
+- New `chat_rooms` table: `id`, `name`, `slug`, `description`, `created_by`, `is_archived`, timestamps
+- Add `room_id` column to `chat_messages` (FK to `chat_rooms`)
+- Seed a default "General" room and backfill existing messages to it
+- RLS:
+  - `chat_rooms`: authenticated users SELECT non-archived rooms; admins manage (insert/update/delete)
+  - `chat_messages`: authenticated SELECT/INSERT scoped to a valid non-archived room; users delete own messages; admins delete any message
+- Enable realtime publication on `chat_rooms`
 
-- TanStack Start + Tailwind v4 (current template)
-- Lovable Cloud (Postgres + Auth + Storage) — needed for users, exams, chat, materials
-- Lovable AI Gateway — for AI question generation from course materials
+**Server functions** (`src/lib/chat.functions.ts`, new):
+- `listRooms` — auth users get list of active rooms
+- `createRoom`, `renameRoom`, `archiveRoom`, `deleteRoom` — admin only
+- `deleteMessage` — admin can delete any message; users can delete their own (uses existing RLS)
 
-### Pages / routes
+**UI**:
+- `src/routes/_authenticated/chat.tsx`: room sidebar/selector at top, switches subscription per room, admins see a delete button on every message
+- `src/routes/_authenticated/admin.tsx`: new "Chat rooms" section with create/rename/archive/delete controls
 
-- `/` — landing (hero, features grid, rotating quotes, theme toggle, donate + contact admin)
-- `/auth` — sign up / sign in (email + password)
-- `/dashboard` — student home: list courses, recent attempts, daily quote
-- `/courses/$code` — course page: start exam, view past attempts, materials
-- `/exam/$attemptId` — 30-question randomized test, timer, submit
-- `/results/$attemptId` — auto-graded score + per-question review
-- `/chat` — realtime class group chat
-- `/admin` — admin only: upload materials per course, manage question banks, view students
-- `_authenticated/` layout protecting everything except `/` and `/auth`
+### 3. Super admin role for adeyigbeminiyi414@gmail.com
+**Database** (same migration):
+- Extend `app_role` enum with `super_admin`
+- Update `handle_new_user()` trigger so that email also gets `super_admin` (in addition to `admin`)
+- Backfill: insert `super_admin` row for the existing account if present
+- Add helper policy pattern: super admins implicitly have admin powers (every `has_role(..., 'admin')` check passes when the user is super_admin) — implement by updating `has_role` to return true when the user holds `super_admin` and the requested role is `admin`, OR by inserting both roles for that user. Simpler approach: always insert both `admin` and `super_admin` rows so existing admin policies keep working unchanged.
+- Super-admin-only capability: only super admins can grant/revoke `admin` role (tighten `user_roles` policies — currently any admin can manage roles)
 
-### Data model (Lovable Cloud)
+**Server functions**:
+- Update `promoteToAdmin` in `src/lib/admin.functions.ts` to require super_admin
+- Add `revokeAdmin` (super_admin only)
+- Add `assertSuperAdmin` helper
 
-- `profiles` (id, full_name, matric_no)
-- `user_roles` (user_id, role: admin | student) — separate table, with `has_role()` SECURITY DEFINER
-- `courses` (id, code, title)
-- `course_materials` (id, course_id, file_path, uploaded_by)
-- `questions` (id, course_id, prompt, options jsonb, correct_index, source_material_id)
-- `exam_attempts` (id, user_id, course_id, started_at, submitted_at, score)
-- `attempt_answers` (attempt_id, question_id, chosen_index, is_correct)
-- `chat_messages` (id, user_id, body, created_at) — realtime
-- `quotes` (id, text, author) — seeded list
+**UI**:
+- In `src/routes/_authenticated/admin.tsx`, show the "Promote admin" / "Revoke admin" controls only when current user is super_admin (fetch role from new `getMyRoles` server fn)
 
-RLS on every table. Students read/write their own attempts; admins manage courses, materials, questions; chat readable by all authenticated users.
-
-### Server functions / routes
-
-- `generateQuestions(courseId, materialId)` — admin-only, calls AI Gateway to produce N MCQs from uploaded material text, inserts into `questions`
-- `startAttempt(courseId)` — picks 30 random questions, creates attempt
-- `submitAttempt(attemptId, answers)` — grades, stores score
-- `getDailyQuote()` — random quote
-
-### Branding: ReadMe (blue)
-
-- Primary blue palette in `src/styles.css` (oklch), light + dark
-- Logo wordmark "ReadMe" with book icon
-- Updated meta titles/descriptions on every route
-
-### Build flow
-
-1. Enable Lovable Cloud + AI Gateway
-2. Generate 3 design directions for the landing page (blue, exam-platform energy) and let you pick one
-3. Migrations for schema + RLS + seed quotes
-4. Auth flow + protected layout + roles
-5. Landing + dashboard + course + exam + results pages
-6. Realtime chat
-7. Admin panel: material upload + AI question generation
-8. Polish, SEO meta per route, theme toggle
-
-### Notes
-
-- I can't copy the original's exact question bank or course list — those live in the original project's database. You'll seed your own courses + upload materials via the admin panel; AI generates the questions.
-- Donate button and admin phone number: tell me what to point them at (or I'll leave them as placeholders you can edit). Donation can go to Adeyi Gbeminiyi, account number 9064887865, bank Opay. Contact 09064887865, adeyigbeminiyi414@gmail.com
+## Technical notes
+- Backfilling existing chat messages into the default room requires the room to exist first, so the migration creates the room with a fixed UUID, sets `chat_messages.room_id` default to it temporarily, backfills, then drops the default and adds NOT NULL.
+- Donor sorting needs the amount, which is currently hidden from the public response — the server fn computes the sum server-side and only returns name + count + rank (no amounts leak to the client).
+- Realtime subscription in chat must re-subscribe when the active room changes; tear down the old channel in the effect cleanup.
