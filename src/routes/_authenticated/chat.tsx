@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
@@ -6,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SiteHeader } from "@/components/SiteHeader";
 import { supabase } from "@/integrations/supabase/client";
+import { getChatProfileNames } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/chat")({
   head: () => ({
@@ -13,6 +15,7 @@ export const Route = createFileRoute("/_authenticated/chat")({
   }),
   component: ChatPage,
 });
+
 
 type Msg = { id: string; body: string; user_id: string; created_at: string; full_name?: string | null };
 
@@ -24,9 +27,12 @@ function ChatPage() {
   const [sending, setSending] = useState(false);
   const profilesCache = useRef<Map<string, string>>(new Map());
   const endRef = useRef<HTMLDivElement>(null);
+  const fetchNames = useServerFn(getChatProfileNames);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setMe(data.user?.id ?? null));
+
+
 
     (async () => {
       const { data: msgs } = await supabase
@@ -36,12 +42,14 @@ function ChatPage() {
         .limit(200);
       const userIds = [...new Set((msgs ?? []).map((m) => m.user_id))];
       if (userIds.length > 0) {
-        const { data: profs } = await supabase
-          .from("profiles")
-          .select("id, full_name")
-          .in("id", userIds);
-        profs?.forEach((p) => profilesCache.current.set(p.id, p.full_name ?? "Student"));
+        try {
+          const profs = await fetchNames({ data: { userIds } });
+          profs.forEach((p) => profilesCache.current.set(p.id, p.full_name ?? "Student"));
+        } catch {
+          /* ignore */
+        }
       }
+
       setMessages(
         (msgs ?? []).map((m) => ({ ...m, full_name: profilesCache.current.get(m.user_id) ?? "Student" })),
       );
@@ -58,10 +66,15 @@ function ChatPage() {
           const m = payload.new as Msg;
           let name = profilesCache.current.get(m.user_id);
           if (!name) {
-            const { data: p } = await supabase.from("profiles").select("full_name").eq("id", m.user_id).single();
-            name = p?.full_name ?? "Student";
+            try {
+              const profs = await fetchNames({ data: { userIds: [m.user_id] } });
+              name = profs[0]?.full_name ?? "Student";
+            } catch {
+              name = "Student";
+            }
             profilesCache.current.set(m.user_id, name);
           }
+
           setMessages((arr) => [...arr, { ...m, full_name: name }]);
           setTimeout(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), 30);
         },

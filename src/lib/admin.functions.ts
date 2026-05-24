@@ -190,3 +190,19 @@ export const promoteToAdmin = createServerFn({ method: "POST" })
     if (rErr && !rErr.message.includes("duplicate")) throw new Error(rErr.message);
     return { ok: true };
   });
+
+export const getChatProfileNames = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ userIds: z.array(z.string().uuid()).max(500) }).parse(input),
+  )
+
+  .handler(async ({ data }) => {
+    if (data.userIds.length === 0) return [] as Array<{ id: string; full_name: string | null }>;
+    const { data: profs, error } = await supabaseAdmin
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", data.userIds);
+    if (error) throw new Error(error.message);
+    return profs ?? [];
+  });
