@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import {
   Loader2, Plus, Sparkles, Upload, Users, FileText, ShieldCheck, Heart, Check, X,
-  Trash2, ExternalLink, BookOpen,
+  Trash2, ExternalLink, BookOpen, MessageSquare, Archive, ArchiveRestore,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,10 +16,11 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
 import { SiteHeader } from "@/components/SiteHeader";
-import { adminDashboard, createCourse, uploadMaterial, generateQuestions, promoteToAdmin } from "@/lib/admin.functions";
+import { adminDashboard, createCourse, uploadMaterial, generateQuestions, promoteToAdmin, revokeAdmin, getMyRoles } from "@/lib/admin.functions";
 import { listExams, createExam, deleteExam } from "@/lib/exams.functions";
 import { listPendingDonations, decideDonation } from "@/lib/donations.functions";
 import { listNotes, createNote, deleteNote } from "@/lib/notes.functions";
+import { listRooms, createRoom, updateRoom, deleteRoom } from "@/lib/chat.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -61,6 +62,7 @@ function AdminPage() {
             <TabsTrigger value="exams">Exams</TabsTrigger>
             <TabsTrigger value="courses">Courses & AI</TabsTrigger>
             <TabsTrigger value="notes">Notes</TabsTrigger>
+            <TabsTrigger value="chat">Chat rooms</TabsTrigger>
             <TabsTrigger value="donations">Donations</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
           </TabsList>
@@ -68,6 +70,7 @@ function AdminPage() {
           <TabsContent value="exams" className="mt-4"><ExamsTab /></TabsContent>
           <TabsContent value="courses" className="mt-4"><CoursesTab courses={data?.courses ?? []} /></TabsContent>
           <TabsContent value="notes" className="mt-4"><NotesTab /></TabsContent>
+          <TabsContent value="chat" className="mt-4"><ChatRoomsTab /></TabsContent>
           <TabsContent value="donations" className="mt-4"><DonationsTab /></TabsContent>
           <TabsContent value="users" className="mt-4"><UsersTab /></TabsContent>
         </Tabs>
@@ -470,27 +473,169 @@ function DonationsTab() {
 /* ─── Users tab ────────────────────────────────────── */
 
 function UsersTab() {
-  const fn = useServerFn(promoteToAdmin);
-  const mut = useMutation({
-    mutationFn: (email: string) => fn({ data: { email } }),
-    onSuccess: () => toast.success("User promoted"),
+  const rolesFn = useServerFn(getMyRoles);
+  const promoteFn = useServerFn(promoteToAdmin);
+  const revokeFn = useServerFn(revokeAdmin);
+  const { data: roles, isLoading } = useQuery({ queryKey: ["my-roles"], queryFn: () => rolesFn() });
+
+  const promoteMut = useMutation({
+    mutationFn: (email: string) => promoteFn({ data: { email } }),
+    onSuccess: () => toast.success("User promoted to admin"),
     onError: (e: Error) => toast.error(e.message),
   });
+  const revokeMut = useMutation({
+    mutationFn: (email: string) => revokeFn({ data: { email } }),
+    onSuccess: () => toast.success("Admin role revoked"),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  if (isLoading) return <Loader2 className="h-5 w-5 animate-spin text-primary" />;
+  if (!roles?.isSuperAdmin) {
+    return <Empty>Only the super admin can promote or revoke admins.</Empty>;
+  }
+
   return (
-    <form
-      className="flex gap-2 max-w-md"
-      onSubmit={(e) => {
-        e.preventDefault();
-        const fd = new FormData(e.currentTarget);
-        mut.mutate(String(fd.get("email")));
-        (e.target as HTMLFormElement).reset();
-      }}
-    >
-      <Input name="email" type="email" placeholder="user@email.com" required />
-      <Button type="submit" disabled={mut.isPending}>
-        {mut.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Promote to admin
-      </Button>
-    </form>
+    <div className="space-y-6 max-w-md">
+      <div>
+        <h2 className="text-lg font-semibold mb-2">Promote to admin</h2>
+        <form
+          className="flex gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const fd = new FormData(e.currentTarget);
+            promoteMut.mutate(String(fd.get("email")));
+            (e.target as HTMLFormElement).reset();
+          }}
+        >
+          <Input name="email" type="email" placeholder="user@email.com" required />
+          <Button type="submit" disabled={promoteMut.isPending}>
+            {promoteMut.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Promote
+          </Button>
+        </form>
+      </div>
+      <div>
+        <h2 className="text-lg font-semibold mb-2">Revoke admin</h2>
+        <form
+          className="flex gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const fd = new FormData(e.currentTarget);
+            if (!confirm(`Revoke admin from ${fd.get("email")}?`)) return;
+            revokeMut.mutate(String(fd.get("email")));
+            (e.target as HTMLFormElement).reset();
+          }}
+        >
+          <Input name="email" type="email" placeholder="user@email.com" required />
+          <Button type="submit" variant="outline" disabled={revokeMut.isPending}>
+            {revokeMut.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Revoke
+          </Button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Chat rooms tab ─────────────────────────────────── */
+
+function ChatRoomsTab() {
+  const listFn = useServerFn(listRooms);
+  const createFn = useServerFn(createRoom);
+  const updateFn = useServerFn(updateRoom);
+  const delFn = useServerFn(deleteRoom);
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({ queryKey: ["admin-rooms"], queryFn: () => listFn() });
+  const refresh = () => qc.invalidateQueries({ queryKey: ["admin-rooms"] });
+
+  const createMut = useMutation({
+    mutationFn: (d: { name: string; description?: string }) => createFn({ data: d }),
+    onSuccess: () => { toast.success("Room created"); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const updateMut = useMutation({
+    mutationFn: (d: { id: string; name?: string; description?: string; isArchived?: boolean }) => updateFn({ data: d }),
+    onSuccess: () => { toast.success("Updated"); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const delMut = useMutation({
+    mutationFn: (id: string) => delFn({ data: { id } }),
+    onSuccess: () => { toast.success("Room deleted"); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="space-y-4">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const fd = new FormData(e.currentTarget);
+          createMut.mutate({
+            name: String(fd.get("name")),
+            description: String(fd.get("description") ?? "") || undefined,
+          });
+          (e.target as HTMLFormElement).reset();
+        }}
+        className="rounded-xl border border-border bg-card p-4 grid gap-2 md:grid-cols-[1fr_2fr_auto]"
+      >
+        <Input name="name" placeholder="Room name" required maxLength={80} />
+        <Input name="description" placeholder="Description (optional)" maxLength={300} />
+        <Button type="submit" disabled={createMut.isPending}>
+          {createMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Plus className="h-4 w-4 mr-1" /> Create</>}
+        </Button>
+      </form>
+
+      {isLoading ? (
+        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+      ) : (data?.length ?? 0) === 0 ? (
+        <Empty>No chat rooms yet.</Empty>
+      ) : (
+        <div className="grid gap-2">
+          {data!.map((r) => {
+            const isDefault = r.id === "00000000-0000-0000-0000-000000000001";
+            return (
+              <div key={r.id} className="rounded-lg border border-border bg-card p-3 flex items-center justify-between gap-3">
+                <div className="min-w-0 flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-primary shrink-0" />
+                  <div className="min-w-0">
+                    <div className="font-medium truncate flex items-center gap-2">
+                      {r.name}
+                      {r.is_archived && <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">archived</span>}
+                      {isDefault && <span className="text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary">default</span>}
+                    </div>
+                    {r.description && <div className="text-xs text-muted-foreground truncate">{r.description}</div>}
+                  </div>
+                </div>
+                <div className="flex gap-1.5">
+                  <Button
+                    size="sm" variant="outline"
+                    onClick={() => updateMut.mutate({ id: r.id, isArchived: !r.is_archived })}
+                    disabled={updateMut.isPending}
+                  >
+                    {r.is_archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+                  </Button>
+                  <Button
+                    size="sm" variant="ghost"
+                    onClick={() => {
+                      const name = prompt("New room name", r.name);
+                      if (name && name.trim().length >= 2) updateMut.mutate({ id: r.id, name: name.trim() });
+                    }}
+                  >
+                    Rename
+                  </Button>
+                  {!isDefault && (
+                    <Button
+                      size="sm" variant="ghost"
+                      onClick={() => { if (confirm("Delete this room? All messages will be removed.")) delMut.mutate(r.id); }}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 

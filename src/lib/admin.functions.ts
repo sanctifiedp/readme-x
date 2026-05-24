@@ -13,6 +13,32 @@ async function assertAdmin(userId: string) {
   if (!data) throw new Error("Forbidden: admin only");
 }
 
+async function assertSuperAdmin(userId: string) {
+  const { data } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "super_admin")
+    .maybeSingle();
+  if (!data) throw new Error("Forbidden: super admin only");
+}
+
+export const getMyRoles = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    if (error) throw new Error(error.message);
+    const roles = (data ?? []).map((r) => r.role as string);
+    return {
+      roles,
+      isAdmin: roles.includes("admin"),
+      isSuperAdmin: roles.includes("super_admin"),
+    };
+  });
+
 export const createCourse = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
@@ -177,7 +203,7 @@ export const promoteToAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ email: z.string().email() }).parse(input))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+    await assertSuperAdmin(context.userId);
     const { data: profile, error } = await supabaseAdmin
       .from("profiles")
       .select("id")
@@ -188,6 +214,27 @@ export const promoteToAdmin = createServerFn({ method: "POST" })
       .from("user_roles")
       .insert({ user_id: profile.id, role: "admin" });
     if (rErr && !rErr.message.includes("duplicate")) throw new Error(rErr.message);
+    return { ok: true };
+  });
+
+export const revokeAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ email: z.string().email() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context.userId);
+    const { data: profile, error } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("email", data.email)
+      .single();
+    if (error || !profile) throw new Error("User not found");
+    // Never revoke super_admin via this path; only admin role.
+    const { error: dErr } = await supabaseAdmin
+      .from("user_roles")
+      .delete()
+      .eq("user_id", profile.id)
+      .eq("role", "admin");
+    if (dErr) throw new Error(dErr.message);
     return { ok: true };
   });
 
