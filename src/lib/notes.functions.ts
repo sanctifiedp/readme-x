@@ -27,7 +27,7 @@ export const listNotes = createServerFn({ method: "POST" })
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
 
-    const rows = data ?? [];
+    
     const signed = await Promise.all(
       rows.map(async (n) => {
         let fileUrl: string | null = null;
