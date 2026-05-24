@@ -42,12 +42,14 @@ function ChatPage() {
         .limit(200);
       const userIds = [...new Set((msgs ?? []).map((m) => m.user_id))];
       if (userIds.length > 0) {
-        const { data: profs } = await supabase
-          .from("profiles")
-          .select("id, full_name")
-          .in("id", userIds);
-        profs?.forEach((p) => profilesCache.current.set(p.id, p.full_name ?? "Student"));
+        try {
+          const profs = await fetchNames({ data: { userIds } });
+          profs.forEach((p) => profilesCache.current.set(p.id, p.full_name ?? "Student"));
+        } catch {
+          /* ignore */
+        }
       }
+
       setMessages(
         (msgs ?? []).map((m) => ({ ...m, full_name: profilesCache.current.get(m.user_id) ?? "Student" })),
       );
