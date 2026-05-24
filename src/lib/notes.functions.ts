@@ -29,7 +29,8 @@ export const listNotes = createServerFn({ method: "POST" })
 
     
     const signed = await Promise.all(
-      rows.map(async (n) => {
+      (rows ?? []).map(async (n) => {
+
         let fileUrl: string | null = null;
         if (n.file_path) {
           const { data: s } = await supabaseAdmin.storage
