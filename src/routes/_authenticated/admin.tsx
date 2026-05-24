@@ -62,6 +62,7 @@ function AdminPage() {
             <TabsTrigger value="exams">Exams</TabsTrigger>
             <TabsTrigger value="courses">Courses & AI</TabsTrigger>
             <TabsTrigger value="notes">Notes</TabsTrigger>
+            <TabsTrigger value="chat">Chat rooms</TabsTrigger>
             <TabsTrigger value="donations">Donations</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
           </TabsList>
@@ -69,6 +70,7 @@ function AdminPage() {
           <TabsContent value="exams" className="mt-4"><ExamsTab /></TabsContent>
           <TabsContent value="courses" className="mt-4"><CoursesTab courses={data?.courses ?? []} /></TabsContent>
           <TabsContent value="notes" className="mt-4"><NotesTab /></TabsContent>
+          <TabsContent value="chat" className="mt-4"><ChatRoomsTab /></TabsContent>
           <TabsContent value="donations" className="mt-4"><DonationsTab /></TabsContent>
           <TabsContent value="users" className="mt-4"><UsersTab /></TabsContent>
         </Tabs>
