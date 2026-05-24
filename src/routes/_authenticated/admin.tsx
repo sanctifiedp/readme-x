@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import {
   Loader2, Plus, Sparkles, Upload, Users, FileText, ShieldCheck, Heart, Check, X,
-  Trash2, ExternalLink, BookOpen,
+  Trash2, ExternalLink, BookOpen, MessageSquare, Archive, ArchiveRestore,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,10 +16,11 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
 import { SiteHeader } from "@/components/SiteHeader";
-import { adminDashboard, createCourse, uploadMaterial, generateQuestions, promoteToAdmin } from "@/lib/admin.functions";
+import { adminDashboard, createCourse, uploadMaterial, generateQuestions, promoteToAdmin, revokeAdmin, getMyRoles } from "@/lib/admin.functions";
 import { listExams, createExam, deleteExam } from "@/lib/exams.functions";
 import { listPendingDonations, decideDonation } from "@/lib/donations.functions";
 import { listNotes, createNote, deleteNote } from "@/lib/notes.functions";
+import { listRooms, createRoom, updateRoom, deleteRoom } from "@/lib/chat.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/admin")({
