@@ -66,10 +66,15 @@ function ChatPage() {
           const m = payload.new as Msg;
           let name = profilesCache.current.get(m.user_id);
           if (!name) {
-            const { data: p } = await supabase.from("profiles").select("full_name").eq("id", m.user_id).single();
-            name = p?.full_name ?? "Student";
+            try {
+              const profs = await fetchNames({ data: { userIds: [m.user_id] } });
+              name = profs[0]?.full_name ?? "Student";
+            } catch {
+              name = "Student";
+            }
             profilesCache.current.set(m.user_id, name);
           }
+
           setMessages((arr) => [...arr, { ...m, full_name: name }]);
           setTimeout(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), 30);
         },
