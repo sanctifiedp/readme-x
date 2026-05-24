@@ -203,7 +203,7 @@ export const promoteToAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ email: z.string().email() }).parse(input))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+    await assertSuperAdmin(context.userId);
     const { data: profile, error } = await supabaseAdmin
       .from("profiles")
       .select("id")
@@ -214,6 +214,27 @@ export const promoteToAdmin = createServerFn({ method: "POST" })
       .from("user_roles")
       .insert({ user_id: profile.id, role: "admin" });
     if (rErr && !rErr.message.includes("duplicate")) throw new Error(rErr.message);
+    return { ok: true };
+  });
+
+export const revokeAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ email: z.string().email() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context.userId);
+    const { data: profile, error } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("email", data.email)
+      .single();
+    if (error || !profile) throw new Error("User not found");
+    // Never revoke super_admin via this path; only admin role.
+    const { error: dErr } = await supabaseAdmin
+      .from("user_roles")
+      .delete()
+      .eq("user_id", profile.id)
+      .eq("role", "admin");
+    if (dErr) throw new Error(dErr.message);
     return { ok: true };
   });
 
