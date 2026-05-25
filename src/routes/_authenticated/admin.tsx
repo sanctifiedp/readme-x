@@ -16,8 +16,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
 import { SiteHeader } from "@/components/SiteHeader";
-import { adminDashboard, createCourse, uploadMaterial, generateQuestions, promoteToAdmin, revokeAdmin, getMyRoles } from "@/lib/admin.functions";
-import { listExams, createExam, deleteExam } from "@/lib/exams.functions";
+import { adminDashboard, uploadMaterial, generateQuestions, promoteToAdmin, revokeAdmin, getMyRoles } from "@/lib/admin.functions";
+import { createCourseFull, deleteCourse } from "@/lib/courses.functions";
 import { listPendingDonations, decideDonation } from "@/lib/donations.functions";
 import { listNotes, createNote, deleteNote } from "@/lib/notes.functions";
 import { listRooms, createRoom, updateRoom, deleteRoom } from "@/lib/chat.functions";
@@ -57,22 +57,24 @@ function AdminPage() {
           <Stat icon={Sparkles} label="Submitted attempts" value={data?.attemptCount ?? 0} />
         </div>
 
-        <Tabs defaultValue="exams">
+        <Tabs defaultValue="courses">
           <TabsList className="flex-wrap h-auto">
-            <TabsTrigger value="exams">Exams</TabsTrigger>
-            <TabsTrigger value="courses">Courses & AI</TabsTrigger>
+            <TabsTrigger value="courses">Course banks</TabsTrigger>
+            <TabsTrigger value="ai">AI generation</TabsTrigger>
             <TabsTrigger value="notes">Notes</TabsTrigger>
             <TabsTrigger value="chat">Chat rooms</TabsTrigger>
             <TabsTrigger value="donations">Donations</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="settings">AI settings</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="exams" className="mt-4"><ExamsTab /></TabsContent>
-          <TabsContent value="courses" className="mt-4"><CoursesTab courses={data?.courses ?? []} /></TabsContent>
+          <TabsContent value="courses" className="mt-4"><CourseBanksTab courses={data?.courses ?? []} /></TabsContent>
+          <TabsContent value="ai" className="mt-4"><CoursesTab courses={data?.courses ?? []} /></TabsContent>
           <TabsContent value="notes" className="mt-4"><NotesTab /></TabsContent>
           <TabsContent value="chat" className="mt-4"><ChatRoomsTab /></TabsContent>
           <TabsContent value="donations" className="mt-4"><DonationsTab /></TabsContent>
           <TabsContent value="users" className="mt-4"><UsersTab /></TabsContent>
+          <TabsContent value="settings" className="mt-4"><AISettingsTab /></TabsContent>
         </Tabs>
       </main>
     </div>
@@ -102,57 +104,49 @@ function Stat({ icon: Icon, label, value }: { icon: React.ElementType; label: st
   );
 }
 
-/* ─── Exams tab ──────────────────────────────────────────── */
+/* ─── Course banks tab ───────────────────────────────── */
 
-function ExamsTab() {
-  const fn = useServerFn(listExams);
-  const createFn = useServerFn(createExam);
-  const delFn = useServerFn(deleteExam);
+function CourseBanksTab({ courses }: { courses: AdminCourse[] }) {
+  const createFn = useServerFn(createCourseFull);
+  const delFn = useServerFn(deleteCourse);
   const qc = useQueryClient();
-  const { data, isLoading } = useQuery({ queryKey: ["admin-exams"], queryFn: () => fn({ data: {} }) });
-  const refresh = () => qc.invalidateQueries({ queryKey: ["admin-exams"] });
+  const refresh = () => qc.invalidateQueries({ queryKey: ["admin-dashboard"] });
 
   const createMut = useMutation({
-    mutationFn: (d: { title: string; description?: string; school?: string; department?: string; level?: string }) =>
+    mutationFn: (d: { code: string; title: string; description?: string; school?: string; department?: string; level?: string }) =>
       createFn({ data: d }),
-    onSuccess: () => { toast.success("Exam created"); refresh(); },
+    onSuccess: () => { toast.success("Course created"); refresh(); },
     onError: (e: Error) => toast.error(e.message),
   });
   const delMut = useMutation({
     mutationFn: (id: string) => delFn({ data: { id } }),
-    onSuccess: () => { toast.success("Exam deleted"); refresh(); },
+    onSuccess: () => { toast.success("Course deleted"); refresh(); },
     onError: (e: Error) => toast.error(e.message),
   });
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Exams</h2>
-        <CreateExamDialog onSubmit={(d) => createMut.mutate(d)} pending={createMut.isPending} />
+        <h2 className="text-xl font-semibold">Course question banks</h2>
+        <CreateCourseFullDialog onSubmit={(d) => createMut.mutate(d)} pending={createMut.isPending} />
       </div>
-      {isLoading ? (
-        <Loader2 className="h-5 w-5 animate-spin text-primary" />
-      ) : (data?.length ?? 0) === 0 ? (
-        <Empty>No exams yet. Create your first one — you can add up to 90 questions per exam.</Empty>
+      {courses.length === 0 ? (
+        <Empty>No courses yet. Create one — each course holds up to 500 questions.</Empty>
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
-          {data!.map((e) => (
-            <div key={e.id} className="rounded-xl border border-border bg-card p-5">
+          {courses.map((c) => (
+            <div key={c.id} className="rounded-xl border border-border bg-card p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold">{e.title}</div>
-                  <div className="mt-1 flex flex-wrap gap-1 text-xs text-muted-foreground">
-                    {e.school && <span>{e.school}</span>}
-                    {e.department && <span>· {e.department}</span>}
-                    {e.level && <span>· Level {e.level}</span>}
-                  </div>
-                  <div className="mt-2 text-xs text-muted-foreground">{e.questionCount} / 90 questions</div>
+                  <div className="font-mono text-xs text-muted-foreground">{c.code}</div>
+                  <div className="font-semibold">{c.title}</div>
+                  <div className="mt-2 text-xs text-muted-foreground">{c.questionCount} / 500 questions</div>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Link to="/admin/exam/$examId" params={{ examId: e.id }}>
+                  <Link to="/admin/course/$courseId" params={{ courseId: c.id }}>
                     <Button size="sm" variant="outline">Edit questions</Button>
                   </Link>
-                  <Button size="sm" variant="ghost" onClick={() => { if (confirm("Delete this exam?")) delMut.mutate(e.id); }}>
+                  <Button size="sm" variant="ghost" onClick={() => { if (confirm("Delete this course and all its questions?")) delMut.mutate(c.id); }}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -165,18 +159,19 @@ function ExamsTab() {
   );
 }
 
-function CreateExamDialog({ onSubmit, pending }: { onSubmit: (d: { title: string; description?: string; school?: string; department?: string; level?: string }) => void; pending: boolean }) {
+function CreateCourseFullDialog({ onSubmit, pending }: { onSubmit: (d: { code: string; title: string; description?: string; school?: string; department?: string; level?: string }) => void; pending: boolean }) {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-1" /> New exam</Button></DialogTrigger>
+      <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-1" /> New course</Button></DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle>Create exam</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Create course</DialogTitle></DialogHeader>
         <form
           onSubmit={(e) => {
             e.preventDefault();
             const fd = new FormData(e.currentTarget);
             onSubmit({
+              code: String(fd.get("code")),
               title: String(fd.get("title")),
               description: String(fd.get("description") ?? "") || undefined,
               school: String(fd.get("school") ?? "") || undefined,
@@ -187,8 +182,9 @@ function CreateExamDialog({ onSubmit, pending }: { onSubmit: (d: { title: string
           }}
           className="space-y-3"
         >
+          <Field label="Course code" name="code" placeholder="CSC101" required />
           <Field label="Title" name="title" required />
-          <Field label="Description" name="description" />
+          <div className="space-y-1.5"><Label htmlFor="d2">Description</Label><Textarea id="d2" name="description" rows={2} /></div>
           <div className="grid grid-cols-3 gap-2">
             <Field label="School" name="school" />
             <Field label="Department" name="department" />
@@ -198,6 +194,32 @@ function CreateExamDialog({ onSubmit, pending }: { onSubmit: (d: { title: string
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function AISettingsTab() {
+  return (
+    <div className="max-w-xl space-y-4">
+      <div className="rounded-xl border border-border bg-card p-5 space-y-2">
+        <h2 className="font-semibold flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /> AI hints</h2>
+        <p className="text-sm text-muted-foreground">
+          Hints are powered by Lovable AI — no setup required. Each question's hint is generated on first request and cached.
+        </p>
+      </div>
+      <div className="rounded-xl border border-dashed border-border p-5 space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary"><Sparkles className="h-3.5 w-3.5" /></span>
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">Coming soon</span>
+        </div>
+        <h3 className="font-semibold">Grok AI integration</h3>
+        <p className="text-sm text-muted-foreground">A future release will let you bring your own Grok API key to power deeper explanations and study summaries.</p>
+        <div className="space-y-1.5 pt-2">
+          <Label htmlFor="grok-key">Grok API key</Label>
+          <Input id="grok-key" placeholder="grok-…" disabled />
+          <p className="text-xs text-muted-foreground">Not active yet — placeholder for the upcoming integration.</p>
+        </div>
+      </div>
+    </div>
   );
 }
 
