@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as ExamsRouteImport } from './routes/exams'
 import { Route as DonateRouteImport } from './routes/donate'
+import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
@@ -20,9 +21,10 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedResultsAttemptIdRouteImport } from './routes/_authenticated/results.$attemptId'
+import { Route as AuthenticatedPracticeCourseIdRouteImport } from './routes/_authenticated/practice.$courseId'
 import { Route as AuthenticatedExamAttemptIdRouteImport } from './routes/_authenticated/exam.$attemptId'
 import { Route as AuthenticatedCoursesCodeRouteImport } from './routes/_authenticated/courses.$code'
-import { Route as AuthenticatedAdminExamExamIdRouteImport } from './routes/_authenticated/admin.exam.$examId'
+import { Route as AuthenticatedAdminCourseCourseIdRouteImport } from './routes/_authenticated/admin.course.$courseId'
 
 const NotesRoute = NotesRouteImport.update({
   id: '/notes',
@@ -37,6 +39,11 @@ const ExamsRoute = ExamsRouteImport.update({
 const DonateRoute = DonateRouteImport.update({
   id: '/donate',
   path: '/donate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoursesRoute = CoursesRouteImport.update({
+  id: '/courses',
+  path: '/courses',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -79,6 +86,12 @@ const AuthenticatedResultsAttemptIdRoute =
     path: '/results/$attemptId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedPracticeCourseIdRoute =
+  AuthenticatedPracticeCourseIdRouteImport.update({
+    id: '/practice/$courseId',
+    path: '/practice/$courseId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedExamAttemptIdRoute =
   AuthenticatedExamAttemptIdRouteImport.update({
     id: '/exam/$attemptId',
@@ -91,16 +104,17 @@ const AuthenticatedCoursesCodeRoute =
     path: '/courses/$code',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedAdminExamExamIdRoute =
-  AuthenticatedAdminExamExamIdRouteImport.update({
-    id: '/exam/$examId',
-    path: '/exam/$examId',
+const AuthenticatedAdminCourseCourseIdRoute =
+  AuthenticatedAdminCourseCourseIdRouteImport.update({
+    id: '/course/$courseId',
+    path: '/course/$courseId',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/courses': typeof CoursesRoute
   '/donate': typeof DonateRoute
   '/exams': typeof ExamsRoute
   '/notes': typeof NotesRoute
@@ -110,12 +124,14 @@ export interface FileRoutesByFullPath {
   '/take/$examId': typeof TakeExamIdRoute
   '/courses/$code': typeof AuthenticatedCoursesCodeRoute
   '/exam/$attemptId': typeof AuthenticatedExamAttemptIdRoute
+  '/practice/$courseId': typeof AuthenticatedPracticeCourseIdRoute
   '/results/$attemptId': typeof AuthenticatedResultsAttemptIdRoute
-  '/admin/exam/$examId': typeof AuthenticatedAdminExamExamIdRoute
+  '/admin/course/$courseId': typeof AuthenticatedAdminCourseCourseIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/courses': typeof CoursesRoute
   '/donate': typeof DonateRoute
   '/exams': typeof ExamsRoute
   '/notes': typeof NotesRoute
@@ -125,14 +141,16 @@ export interface FileRoutesByTo {
   '/take/$examId': typeof TakeExamIdRoute
   '/courses/$code': typeof AuthenticatedCoursesCodeRoute
   '/exam/$attemptId': typeof AuthenticatedExamAttemptIdRoute
+  '/practice/$courseId': typeof AuthenticatedPracticeCourseIdRoute
   '/results/$attemptId': typeof AuthenticatedResultsAttemptIdRoute
-  '/admin/exam/$examId': typeof AuthenticatedAdminExamExamIdRoute
+  '/admin/course/$courseId': typeof AuthenticatedAdminCourseCourseIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
+  '/courses': typeof CoursesRoute
   '/donate': typeof DonateRoute
   '/exams': typeof ExamsRoute
   '/notes': typeof NotesRoute
@@ -142,14 +160,16 @@ export interface FileRoutesById {
   '/take/$examId': typeof TakeExamIdRoute
   '/_authenticated/courses/$code': typeof AuthenticatedCoursesCodeRoute
   '/_authenticated/exam/$attemptId': typeof AuthenticatedExamAttemptIdRoute
+  '/_authenticated/practice/$courseId': typeof AuthenticatedPracticeCourseIdRoute
   '/_authenticated/results/$attemptId': typeof AuthenticatedResultsAttemptIdRoute
-  '/_authenticated/admin/exam/$examId': typeof AuthenticatedAdminExamExamIdRoute
+  '/_authenticated/admin/course/$courseId': typeof AuthenticatedAdminCourseCourseIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
+    | '/courses'
     | '/donate'
     | '/exams'
     | '/notes'
@@ -159,12 +179,14 @@ export interface FileRouteTypes {
     | '/take/$examId'
     | '/courses/$code'
     | '/exam/$attemptId'
+    | '/practice/$courseId'
     | '/results/$attemptId'
-    | '/admin/exam/$examId'
+    | '/admin/course/$courseId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/courses'
     | '/donate'
     | '/exams'
     | '/notes'
@@ -174,13 +196,15 @@ export interface FileRouteTypes {
     | '/take/$examId'
     | '/courses/$code'
     | '/exam/$attemptId'
+    | '/practice/$courseId'
     | '/results/$attemptId'
-    | '/admin/exam/$examId'
+    | '/admin/course/$courseId'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/courses'
     | '/donate'
     | '/exams'
     | '/notes'
@@ -190,14 +214,16 @@ export interface FileRouteTypes {
     | '/take/$examId'
     | '/_authenticated/courses/$code'
     | '/_authenticated/exam/$attemptId'
+    | '/_authenticated/practice/$courseId'
     | '/_authenticated/results/$attemptId'
-    | '/_authenticated/admin/exam/$examId'
+    | '/_authenticated/admin/course/$courseId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
+  CoursesRoute: typeof CoursesRoute
   DonateRoute: typeof DonateRoute
   ExamsRoute: typeof ExamsRoute
   NotesRoute: typeof NotesRoute
@@ -225,6 +251,13 @@ declare module '@tanstack/react-router' {
       path: '/donate'
       fullPath: '/donate'
       preLoaderRoute: typeof DonateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/courses': {
+      id: '/courses'
+      path: '/courses'
+      fullPath: '/courses'
+      preLoaderRoute: typeof CoursesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -283,6 +316,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedResultsAttemptIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/practice/$courseId': {
+      id: '/_authenticated/practice/$courseId'
+      path: '/practice/$courseId'
+      fullPath: '/practice/$courseId'
+      preLoaderRoute: typeof AuthenticatedPracticeCourseIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/exam/$attemptId': {
       id: '/_authenticated/exam/$attemptId'
       path: '/exam/$attemptId'
@@ -297,22 +337,22 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCoursesCodeRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/admin/exam/$examId': {
-      id: '/_authenticated/admin/exam/$examId'
-      path: '/exam/$examId'
-      fullPath: '/admin/exam/$examId'
-      preLoaderRoute: typeof AuthenticatedAdminExamExamIdRouteImport
+    '/_authenticated/admin/course/$courseId': {
+      id: '/_authenticated/admin/course/$courseId'
+      path: '/course/$courseId'
+      fullPath: '/admin/course/$courseId'
+      preLoaderRoute: typeof AuthenticatedAdminCourseCourseIdRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
   }
 }
 
 interface AuthenticatedAdminRouteChildren {
-  AuthenticatedAdminExamExamIdRoute: typeof AuthenticatedAdminExamExamIdRoute
+  AuthenticatedAdminCourseCourseIdRoute: typeof AuthenticatedAdminCourseCourseIdRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
-  AuthenticatedAdminExamExamIdRoute: AuthenticatedAdminExamExamIdRoute,
+  AuthenticatedAdminCourseCourseIdRoute: AuthenticatedAdminCourseCourseIdRoute,
 }
 
 const AuthenticatedAdminRouteWithChildren =
@@ -324,6 +364,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedCoursesCodeRoute: typeof AuthenticatedCoursesCodeRoute
   AuthenticatedExamAttemptIdRoute: typeof AuthenticatedExamAttemptIdRoute
+  AuthenticatedPracticeCourseIdRoute: typeof AuthenticatedPracticeCourseIdRoute
   AuthenticatedResultsAttemptIdRoute: typeof AuthenticatedResultsAttemptIdRoute
 }
 
@@ -333,6 +374,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedCoursesCodeRoute: AuthenticatedCoursesCodeRoute,
   AuthenticatedExamAttemptIdRoute: AuthenticatedExamAttemptIdRoute,
+  AuthenticatedPracticeCourseIdRoute: AuthenticatedPracticeCourseIdRoute,
   AuthenticatedResultsAttemptIdRoute: AuthenticatedResultsAttemptIdRoute,
 }
 
@@ -344,6 +386,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
+  CoursesRoute: CoursesRoute,
   DonateRoute: DonateRoute,
   ExamsRoute: ExamsRoute,
   NotesRoute: NotesRoute,
@@ -352,13 +395,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

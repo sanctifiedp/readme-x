@@ -10,31 +10,21 @@ export const startAttempt = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ courseId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-
-    // Get all questions for course
     const { data: questions, error } = await supabaseAdmin
-      .from("questions")
-      .select("id")
-      .eq("course_id", data.courseId);
+      .from("questions").select("id").eq("course_id", data.courseId);
     if (error) throw new Error(error.message);
     if (!questions || questions.length === 0) {
-      throw new Error("No questions are available for this course yet. Ask the admin to upload materials.");
+      throw new Error("No questions are available for this course yet.");
     }
-
-    // Shuffle and pick
     const shuffled = [...questions].sort(() => Math.random() - 0.5);
     const picked = shuffled.slice(0, Math.min(QUESTIONS_PER_EXAM, shuffled.length)).map((q) => q.id);
-
     const { data: attempt, error: attemptError } = await supabaseAdmin
       .from("exam_attempts")
       .insert({
-        user_id: userId,
-        course_id: data.courseId,
-        question_ids: picked,
-        total: picked.length,
+        user_id: userId, course_id: data.courseId,
+        question_ids: picked, total: picked.length,
       })
-      .select("id")
-      .single();
+      .select("id").single();
     if (attemptError) throw new Error(attemptError.message);
     return { attemptId: attempt.id };
   });
@@ -46,7 +36,7 @@ export const getAttempt = createServerFn({ method: "POST" })
     const { userId } = context;
     const { data: attempt, error } = await supabaseAdmin
       .from("exam_attempts")
-      .select("*, courses(code, title), exams(title)")
+      .select("*, courses(code, title)")
       .eq("id", data.attemptId)
       .eq("user_id", userId)
       .single();
@@ -66,10 +56,13 @@ export const getAttempt = createServerFn({ method: "POST" })
       attempt: {
         id: attempt.id,
         courseCode: attempt.courses?.code ?? "",
-        courseTitle: attempt.exams?.title ?? attempt.courses?.title ?? "Exam",
+        courseTitle: attempt.courses?.title ?? "Practice",
         submittedAt: attempt.submitted_at,
         score: attempt.score,
         total: attempt.total,
+        expiresAt: attempt.expires_at as string | null,
+        durationSeconds: attempt.duration_seconds as number,
+        startedAt: attempt.started_at as string,
       },
       questions: ordered.map((q) => ({
         id: q.id,
@@ -78,7 +71,6 @@ export const getAttempt = createServerFn({ method: "POST" })
       })),
     };
   });
-
 
 export const submitAttempt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -100,7 +92,7 @@ export const submitAttempt = createServerFn({ method: "POST" })
       .single();
     if (aerr || !attempt) throw new Error("Attempt not found");
     if (attempt.user_id !== userId) throw new Error("Forbidden");
-    if (attempt.submitted_at) throw new Error("Already submitted");
+    if (attempt.submitted_at) return { score: attempt.total, total: attempt.total };
 
     const ids = data.answers.map((a) => a.questionId);
     const { data: qs } = await supabaseAdmin
@@ -144,7 +136,7 @@ export const getResults = createServerFn({ method: "POST" })
     const { userId } = context;
     const { data: attempt, error } = await supabaseAdmin
       .from("exam_attempts")
-      .select("*, courses(code, title), exams(title)")
+      .select("*, courses(code, title)")
       .eq("id", data.attemptId)
       .eq("user_id", userId)
       .single();
@@ -153,7 +145,7 @@ export const getResults = createServerFn({ method: "POST" })
     const ids = attempt.question_ids as string[];
     const { data: questions } = await supabaseAdmin
       .from("questions")
-      .select("id, prompt, options, correct_index")
+      .select("id, prompt, options, correct_index, hint")
       .in("id", ids);
     const { data: answers } = await supabaseAdmin
       .from("attempt_answers")
@@ -164,12 +156,12 @@ export const getResults = createServerFn({ method: "POST" })
       attempt: {
         id: attempt.id,
         courseCode: attempt.courses?.code ?? "",
-        courseTitle: attempt.exams?.title ?? attempt.courses?.title ?? "Exam",
+        courseTitle: attempt.courses?.title ?? "Practice",
         score: attempt.score,
         total: attempt.total,
-        submittedAt: attempt.submitted_at,
+        submittedAt: attempt.submitted_at as string | null,
+        startedAt: attempt.started_at as string,
       },
-
       questions: ids.map((id) => {
         const q = questions?.find((x) => x.id === id);
         const a = answers?.find((x) => x.question_id === id);
@@ -180,6 +172,7 @@ export const getResults = createServerFn({ method: "POST" })
           correctIndex: q?.correct_index ?? -1,
           chosenIndex: a?.chosen_index ?? null,
           isCorrect: a?.is_correct ?? false,
+          hint: q?.hint ?? null,
         };
       }),
     };
@@ -210,12 +203,9 @@ export const getDashboard = createServerFn({ method: "GET" })
       supabaseAdmin.from("profiles").select("full_name, matric_no, email").eq("id", userId).single(),
     ]);
 
-    // Check admin
     const { data: roles } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId);
-    const isAdmin = roles?.some((r) => r.role === "admin") ?? false;
+      .from("user_roles").select("role").eq("user_id", userId);
+    const isAdmin = roles?.some((r) => r.role === "admin" || r.role === "super_admin") ?? false;
 
     return {
       courses: courses ?? [],

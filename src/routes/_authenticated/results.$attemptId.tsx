@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, CheckCircle2, XCircle, Award } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Award, Sparkles, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -10,6 +10,13 @@ import { getResults } from "@/lib/exam.functions";
 export const Route = createFileRoute("/_authenticated/results/$attemptId")({
   component: ResultsPage,
 });
+
+function fmtDuration(sec: number) {
+  if (sec < 60) return `${sec}s`;
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return s ? `${m}m ${s}s` : `${m}m`;
+}
 
 function ResultsPage() {
   const { attemptId } = Route.useParams();
@@ -30,6 +37,9 @@ function ResultsPage() {
 
   const pct = data.attempt.total ? Math.round(((data.attempt.score ?? 0) / data.attempt.total) * 100) : 0;
   const passed = pct >= 50;
+  const timeUsed = data.attempt.submittedAt && data.attempt.startedAt
+    ? Math.max(0, Math.floor((new Date(data.attempt.submittedAt).getTime() - new Date(data.attempt.startedAt).getTime()) / 1000))
+    : null;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -44,6 +54,11 @@ function ResultsPage() {
           <p className="mt-3 text-sm uppercase tracking-wider opacity-80">{data.attempt.courseCode} · {data.attempt.courseTitle}</p>
           <h1 className="text-6xl font-extrabold mt-2">{data.attempt.score} / {data.attempt.total}</h1>
           <p className="mt-2 text-2xl font-semibold opacity-90">{pct}%</p>
+          {timeUsed !== null && (
+            <p className="mt-2 inline-flex items-center gap-1.5 text-sm opacity-90">
+              <Clock className="h-3.5 w-3.5" /> Time used: {fmtDuration(timeUsed)}
+            </p>
+          )}
           <p className="mt-3 text-sm opacity-80">{passed ? "Great work — keep going." : "Keep practicing — you've got this."}</p>
         </div>
 
@@ -82,6 +97,12 @@ function ResultsPage() {
                       );
                     })}
                   </div>
+                  {q.hint && (
+                    <div className="mt-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm flex items-start gap-2">
+                      <Sparkles className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                      <span><span className="font-semibold">Hint: </span>{q.hint}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

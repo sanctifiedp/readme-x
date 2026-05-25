@@ -1,0 +1,1 @@
+revoke execute on function public.enforce_question_cap() from public, anon, authenticated;

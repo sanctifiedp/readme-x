@@ -9,33 +9,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SiteHeader } from "@/components/SiteHeader";
-import { getExamForAdmin, addExamQuestion, deleteExamQuestion } from "@/lib/exams.functions";
+import { getCourseBank, addCourseQuestion, deleteCourseQuestion } from "@/lib/courses.functions";
 
-export const Route = createFileRoute("/_authenticated/admin/exam/$examId")({
-  head: () => ({ meta: [{ title: "Edit exam — ReadMe" }] }),
-  component: ExamEditor,
+export const Route = createFileRoute("/_authenticated/admin/course/$courseId")({
+  head: () => ({ meta: [{ title: "Edit course bank — ReadMe X" }] }),
+  component: CourseBankEditor,
 });
 
-function ExamEditor() {
-  const { examId } = Route.useParams();
-  const getFn = useServerFn(getExamForAdmin);
-  const addFn = useServerFn(addExamQuestion);
-  const delFn = useServerFn(deleteExamQuestion);
+function CourseBankEditor() {
+  const { courseId } = Route.useParams();
+  const getFn = useServerFn(getCourseBank);
+  const addFn = useServerFn(addCourseQuestion);
+  const delFn = useServerFn(deleteCourseQuestion);
   const qc = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["admin-exam", examId],
-    queryFn: () => getFn({ data: { examId } }),
+    queryKey: ["course-bank", courseId],
+    queryFn: () => getFn({ data: { courseId } }),
     retry: false,
   });
-  const refresh = () => qc.invalidateQueries({ queryKey: ["admin-exam", examId] });
+  const refresh = () => qc.invalidateQueries({ queryKey: ["course-bank", courseId] });
 
   const [options, setOptions] = useState(["", "", "", ""]);
   const [correct, setCorrect] = useState(0);
 
   const addMut = useMutation({
     mutationFn: (d: { prompt: string }) =>
-      addFn({ data: { examId, prompt: d.prompt, options, correctIndex: correct } }),
+      addFn({ data: { courseId, prompt: d.prompt, options, correctIndex: correct } }),
     onSuccess: () => {
       toast.success("Question added");
       setOptions(["", "", "", ""]);
@@ -72,7 +72,8 @@ function ExamEditor() {
         </Link>
 
         <div>
-          <h1 className="text-3xl font-bold">{data!.exam.title}</h1>
+          <div className="font-mono text-xs text-muted-foreground">{data!.course.code}</div>
+          <h1 className="text-3xl font-bold">{data!.course.title}</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {data!.questions.length} / {data!.max} questions · {remaining} slots remaining
           </p>
@@ -122,7 +123,7 @@ function ExamEditor() {
           </form>
         ) : (
           <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-            This exam is at the 90-question maximum.
+            This course is at the 500-question maximum.
           </div>
         )}
 
