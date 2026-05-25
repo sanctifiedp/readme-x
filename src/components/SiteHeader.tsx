@@ -1,11 +1,13 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BookOpen, Moon, Sun, LogOut, Heart, MessageCircle, Menu, X } from "lucide-react";
+import { BookOpen, Moon, Sun, LogOut, Heart, MessageCircle, Menu, X, MessageSquareText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { initTheme, toggleTheme, isDark } from "@/lib/theme";
 
 const WA_URL = "https://wa.me/2349064887865";
+export const FEEDBACK_URL =
+  "https://docs.google.com/forms/d/e/1FAIpQLSdSYgpAaMAFZXmw0HSl38jzQ7DGoogXiR9BVrcCOxDHgyTZ9Q/viewform";
 
 export function SiteHeader() {
   const [user, setUser] = useState<{ email?: string | null } | null>(null);
@@ -35,12 +37,12 @@ export function SiteHeader() {
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
             <BookOpen className="h-5 w-5" />
           </span>
-          <span className="tracking-tight">ReadMe</span>
+          <span className="tracking-tight">ReadMe X</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">
           <Link to="/" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Home</Link>
-          <Link to="/exams" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Exams</Link>
+          <Link to="/courses" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Practice</Link>
           <Link to="/notes" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Notes</Link>
           <Link to="/donate" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Donate</Link>
           {user && (
@@ -52,6 +54,11 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <a href={FEEDBACK_URL} target="_blank" rel="noreferrer" className="hidden lg:inline-flex">
+            <Button variant="ghost" size="sm" className="gap-1.5">
+              <MessageSquareText className="h-4 w-4" /> Feedback
+            </Button>
+          </a>
           <Link to="/donate" className="hidden sm:inline-flex">
             <Button variant="outline" size="sm" className="gap-1.5">
               <Heart className="h-4 w-4" /> Donate
@@ -86,17 +93,19 @@ export function SiteHeader() {
       </div>
       {open && (
         <nav className="md:hidden border-t border-border/60 bg-background px-4 py-2 flex flex-col">
-          {["/", "/exams", "/notes", "/donate"].map((to) => (
-            <Link key={to} to={to} onClick={() => setOpen(false)} className="py-2 text-sm">
-              {to === "/" ? "Home" : to.replace("/", "").replace(/^\w/, (c) => c.toUpperCase())}
-            </Link>
-          ))}
-          {user ? (
+          <Link to="/" onClick={() => setOpen(false)} className="py-2 text-sm">Home</Link>
+          <Link to="/courses" onClick={() => setOpen(false)} className="py-2 text-sm">Practice</Link>
+          <Link to="/notes" onClick={() => setOpen(false)} className="py-2 text-sm">Notes</Link>
+          <Link to="/donate" onClick={() => setOpen(false)} className="py-2 text-sm">Donate</Link>
+          {user && (
             <>
               <Link to="/dashboard" onClick={() => setOpen(false)} className="py-2 text-sm">Dashboard</Link>
               <Link to="/chat" onClick={() => setOpen(false)} className="py-2 text-sm">Chat</Link>
-              <button onClick={handleSignOut} className="py-2 text-sm text-left">Sign out</button>
             </>
+          )}
+          <a href={FEEDBACK_URL} target="_blank" rel="noreferrer" className="py-2 text-sm">Give feedback</a>
+          {user ? (
+            <button onClick={handleSignOut} className="py-2 text-sm text-left">Sign out</button>
           ) : (
             <Link to="/auth" onClick={() => setOpen(false)} className="py-2 text-sm">Sign in</Link>
           )}
