@@ -1,44 +1,101 @@
-## Changes
+# ReadMe X — v2 plan
 
-### 1. Donor list sorted by total amount donated
-Update `listDonors` in `src/lib/donations.functions.ts` to sum each donor's approved donation amounts and sort by that total (descending). The public list still hides individual amounts — only the order changes. Public donor wall in `src/routes/donate.tsx` continues showing name + donation count.
+## 1. Question banks replace exams
 
-### 2. Multiple chat rooms with admin moderation
-**Database** (migration):
-- New `chat_rooms` table: `id`, `name`, `slug`, `description`, `created_by`, `is_archived`, timestamps
-- Add `room_id` column to `chat_messages` (FK to `chat_rooms`)
-- Seed a default "General" room and backfill existing messages to it
-- RLS:
-  - `chat_rooms`: authenticated users SELECT non-archived rooms; admins manage (insert/update/delete)
-  - `chat_messages`: authenticated SELECT/INSERT scoped to a valid non-archived room; users delete own messages; admins delete any message
-- Enable realtime publication on `chat_rooms`
+Pivot the exam concept to **per-course question banks**.
 
-**Server functions** (`src/lib/chat.functions.ts`, new):
-- `listRooms` — auth users get list of active rooms
-- `createRoom`, `renameRoom`, `archiveRoom`, `deleteRoom` — admin only
-- `deleteMessage` — admin can delete any message; users can delete their own (uses existing RLS)
+- `questions` table already exists (`course_id`, `prompt`, `options`, `correct_index`). Add `hint TEXT NULL` for cached AI hints.
+- Admin uploads questions directly to a **course** (cap **500/course**).
+- Drop the `exams` editor concept; existing `exams` rows are migrated: each exam's questions are re-pointed to `exam.course_id` (already set) and the exams table is hidden from UI (kept in DB for safety).
+- New browse page: list **courses** (with school/department/level filter + search). Each card → "Practice".
 
-**UI**:
-- `src/routes/_authenticated/chat.tsx`: room sidebar/selector at top, switches subscription per room, admins see a delete button on every message
-- `src/routes/_authenticated/admin.tsx`: new "Chat rooms" section with create/rename/archive/delete controls
+## 2. Practice flow (student)
 
-### 3. Super admin role for adeyigbeminiyi414@gmail.com
-**Database** (same migration):
-- Extend `app_role` enum with `super_admin`
-- Update `handle_new_user()` trigger so that email also gets `super_admin` (in addition to `admin`)
-- Backfill: insert `super_admin` row for the existing account if present
-- Add helper policy pattern: super admins implicitly have admin powers (every `has_role(..., 'admin')` check passes when the user is super_admin) — implement by updating `has_role` to return true when the user holds `super_admin` and the requested role is `admin`, OR by inserting both roles for that user. Simpler approach: always insert both `admin` and `super_admin` rows so existing admin policies keep working unchanged.
-- Super-admin-only capability: only super admins can grant/revoke `admin` role (tighten `user_roles` policies — currently any admin can manage roles)
+On a course's Practice screen:
+- Inputs: **# of questions** (1–70, capped at bank size) and **time limit** (1–30 min).
+- Server function `startPractice({ courseId, count, minutes })`:
+  - Randomly picks `count` question IDs from the course bank.
+  - Creates an `exam_attempts` row (reuse table) with `question_ids`, `total = count`, new column `duration_seconds`, new `expires_at`.
+- Take screen:
+  - Countdown timer; auto-submits at 0.
+  - "Show hint" button per question → calls `getHint({ questionId })`. Server checks cached `hint` column; if empty, generates a one-sentence hint via Lovable AI (`google/gemini-3-flash-preview`), stores it, returns it. Subsequent users reuse the cached hint (cheap + consistent).
+- Submit → score + redirect to results.
 
-**Server functions**:
-- Update `promoteToAdmin` in `src/lib/admin.functions.ts` to require super_admin
-- Add `revokeAdmin` (super_admin only)
-- Add `assertSuperAdmin` helper
+## 3. Review on results page
 
-**UI**:
-- In `src/routes/_authenticated/admin.tsx`, show the "Promote admin" / "Revoke admin" controls only when current user is super_admin (fetch role from new `getMyRoles` server fn)
+Rework `results.$attemptId.tsx` to show, per question:
+- The prompt
+- All options with: ✓ user's answer (green if correct / red if wrong) and ✓ correct answer highlighted
+- The AI hint (if it was generated during the attempt)
+- Final score + time used
 
-## Technical notes
-- Backfilling existing chat messages into the default room requires the room to exist first, so the migration creates the room with a fixed UUID, sets `chat_messages.room_id` default to it temporarily, backfills, then drops the default and adds NOT NULL.
-- Donor sorting needs the amount, which is currently hidden from the public response — the server fn computes the sum server-side and only returns name + count + rank (no amounts leak to the client).
-- Realtime subscription in chat must re-subscribe when the active room changes; tear down the old channel in the effect cleanup.
+## 4. Fix admin editor + audit other pages
+
+- The route `/admin/exam/$examId` exists and is correctly wired, but in the new model we rename it to `/admin/course/$courseId` and edit the **course's question bank** (the actual user complaint). The editor will:
+  - Show current count `/ 500`.
+  - Add question form (prompt + 4 options + correct index).
+  - List + delete questions.
+  - Optional: "(Re)generate hint" button per question (admin-only).
+- Admin dashboard exam tab → replaced with **Courses** tab: create course (code, title, school, department, level, description), then "Edit questions" links to new editor.
+- Audit pass on existing pages and fix any broken loaders/links surfaced by the pivot:
+  - `take.$examId.tsx` → replaced by `practice.$courseId.tsx`.
+  - `exam.$attemptId.tsx` → kept (works on attempts), updated for timer + hints.
+  - Old `exams.tsx` route → redirects to new `/courses` browse.
+  - Verify dashboard, donate, notes, chat still load cleanly.
+
+## 5. Landing page refresh (light, not a redesign)
+
+Rebuild `src/routes/index.tsx`:
+1. **Hero**: H1 "Practice past questions. Pass with confidence." + 1-sentence sub ("Timed CBT practice from your course's question bank, with AI hints when you're stuck."). Primary CTA "Start practicing" (→ `/courses`), secondary "Browse notes".
+2. **Benefits** (4 cards): timed practice you control · 500-question banks per course · AI hint on every question · review answers after every attempt.
+3. **Trust strip**: "Built by students, for students · Early access · Your feedback shapes the roadmap."
+4. **Feature preview** mock (static): screenshot-style card of a practice question + hint.
+5. **Coming soon**: tagged placeholders (peer study rooms, smart recommendations).
+6. **Feedback CTA**: button → the Google Form link.
+7. **Secondary CTA** at bottom.
+- Mobile: tighter spacing, full-width CTAs, single-column.
+- Keep existing tokens in `src/styles.css`; small polish to type scale + spacing only.
+
+## 6. Grok AI placeholder
+
+In `/admin` add a small **AI Settings** section:
+- Read-only note: "Hints are powered by Lovable AI."
+- Disabled input "Grok API key (coming soon)" with helper text.
+- No DB / secret writes — purely a placeholder so the user can see the planned slot.
+
+## 7. Feedback button
+
+- "Give feedback" link in `SiteHeader` (desktop) + `SiteFooter` + landing CTA → `https://docs.google.com/forms/d/e/1FAIpQLSdSYgpAaMAFZXmw0HSl38jzQ7DGoogXiR9BVrcCOxDHgyTZ9Q/viewform`. `target="_blank" rel="noreferrer"`.
+
+---
+
+## Technical section
+
+**Migration**
+- `ALTER TABLE questions ADD COLUMN hint TEXT;`
+- `ALTER TABLE exam_attempts ADD COLUMN duration_seconds INT NOT NULL DEFAULT 1800, ADD COLUMN expires_at TIMESTAMPTZ;`
+- Add trigger / server check: refuse insert into `questions` when course already has 500 rows.
+- Keep `exams` + admin policies untouched (still RLS-protected) — just hidden from UI.
+
+**New / changed files**
+- `src/lib/courses.functions.ts` — listCourses (filters), createCourse, updateCourse, deleteCourse, getCourseBank, addCourseQuestion, deleteCourseQuestion, regenerateHint.
+- `src/lib/practice.functions.ts` — startPractice, getHint (Lovable AI, on-demand, cached), submit (reuse existing logic).
+- `src/routes/courses.tsx` — public browse (filters).
+- `src/routes/_authenticated/practice.$courseId.tsx` — pick count + time, start.
+- `src/routes/_authenticated/admin/course.$courseId.tsx` — bank editor (replaces exam editor).
+- `src/routes/_authenticated/exam.$attemptId.tsx` — add timer + hint button.
+- `src/routes/_authenticated/results.$attemptId.tsx` — full review UI.
+- `src/routes/index.tsx` — rewritten landing.
+- `SiteHeader.tsx` / `SiteFooter.tsx` — feedback link, nav updated to `/courses` + `/notes`.
+- `src/routes/exams.tsx` → redirect to `/courses` (kept for backward compat).
+
+**AI hint call** (server fn, on-demand, cached in `questions.hint`):
+```
+POST https://ai.gateway.lovable.dev/v1/chat/completions
+model: google/gemini-3-flash-preview
+system: "Give a single short sentence hint (max 20 words) that nudges the student toward the answer without revealing it."
+user: prompt + options
+```
+Handles 429/402 with toast on the client.
+
+**Admin editor bug**: in the new model we ship the new route `/admin/course/$courseId` and update the admin link, so the broken flow is replaced wholesale rather than patched. I'll smoke-test create-course → add-questions → start-practice → submit → review.
