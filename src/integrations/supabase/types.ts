@@ -151,22 +151,31 @@ export type Database = {
         Row: {
           code: string
           created_at: string
+          department: string | null
           description: string | null
           id: string
+          level: string | null
+          school: string | null
           title: string
         }
         Insert: {
           code: string
           created_at?: string
+          department?: string | null
           description?: string | null
           id?: string
+          level?: string | null
+          school?: string | null
           title: string
         }
         Update: {
           code?: string
           created_at?: string
+          department?: string | null
           description?: string | null
           id?: string
+          level?: string | null
+          school?: string | null
           title?: string
         }
         Relationships: []
@@ -213,7 +222,9 @@ export type Database = {
       exam_attempts: {
         Row: {
           course_id: string | null
+          duration_seconds: number
           exam_id: string | null
+          expires_at: string | null
           id: string
           question_ids: Json
           score: number | null
@@ -224,7 +235,9 @@ export type Database = {
         }
         Insert: {
           course_id?: string | null
+          duration_seconds?: number
           exam_id?: string | null
+          expires_at?: string | null
           id?: string
           question_ids: Json
           score?: number | null
@@ -235,7 +248,9 @@ export type Database = {
         }
         Update: {
           course_id?: string | null
+          duration_seconds?: number
           exam_id?: string | null
+          expires_at?: string | null
           id?: string
           question_ids?: Json
           score?: number | null
@@ -386,6 +401,7 @@ export type Database = {
           course_id: string | null
           created_at: string
           exam_id: string | null
+          hint: string | null
           id: string
           options: Json
           prompt: string
@@ -396,6 +412,7 @@ export type Database = {
           course_id?: string | null
           created_at?: string
           exam_id?: string | null
+          hint?: string | null
           id?: string
           options: Json
           prompt: string
@@ -406,6 +423,7 @@ export type Database = {
           course_id?: string | null
           created_at?: string
           exam_id?: string | null
+          hint?: string | null
           id?: string
           options?: Json
           prompt?: string
