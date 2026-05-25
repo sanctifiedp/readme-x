@@ -1,22 +1,30 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Loader2, Send } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Send, Sparkles, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getAttempt, submitAttempt } from "@/lib/exam.functions";
+import { getHint } from "@/lib/practice.functions";
 
 export const Route = createFileRoute("/_authenticated/exam/$attemptId")({
   component: ExamPage,
 });
+
+function fmt(s: number) {
+  const m = Math.floor(s / 60).toString().padStart(2, "0");
+  const r = (s % 60).toString().padStart(2, "0");
+  return `${m}:${r}`;
+}
 
 function ExamPage() {
   const { attemptId } = Route.useParams();
   const navigate = useNavigate();
   const fetchAttempt = useServerFn(getAttempt);
   const submitFn = useServerFn(submitAttempt);
+  const hintFn = useServerFn(getHint);
 
   const { data, isLoading } = useQuery({
     queryKey: ["attempt", attemptId],
@@ -25,6 +33,9 @@ function ExamPage() {
 
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [idx, setIdx] = useState(0);
+  const [hints, setHints] = useState<Record<string, string>>({});
+  const [hintLoading, setHintLoading] = useState<string | null>(null);
+  const [remaining, setRemaining] = useState<number | null>(null);
 
   const submitMut = useMutation({
     mutationFn: () =>
@@ -40,6 +51,24 @@ function ExamPage() {
     onSuccess: () => navigate({ to: "/results/$attemptId", params: { attemptId } }),
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const submitNow = useCallback(() => {
+    if (!submitMut.isPending) submitMut.mutate();
+  }, [submitMut]);
+
+  // Initialise + tick timer
+  useEffect(() => {
+    const exp = data?.attempt?.expiresAt ? new Date(data.attempt.expiresAt).getTime() : null;
+    if (!exp) return;
+    const tick = () => {
+      const s = Math.max(0, Math.floor((exp - Date.now()) / 1000));
+      setRemaining(s);
+      if (s <= 0) submitNow();
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [data?.attempt?.expiresAt, submitNow]);
 
   const answeredCount = useMemo(() => Object.keys(answers).length, [answers]);
 
@@ -63,17 +92,39 @@ function ExamPage() {
   if (!q) return null;
   const total = data.questions.length;
 
+  const loadHint = async () => {
+    if (hints[q.id]) return;
+    setHintLoading(q.id);
+    try {
+      const res = await hintFn({ data: { questionId: q.id } });
+      setHints((h) => ({ ...h, [q.id]: res.hint }));
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setHintLoading(null);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
       <main className="flex-1 container mx-auto px-4 py-6 max-w-3xl">
-        <div className="flex items-center justify-between mb-4">
-          <div>
+        <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+          <div className="min-w-0">
             <div className="font-mono text-xs text-muted-foreground">{data.attempt.courseCode}</div>
-            <h1 className="font-semibold">{data.attempt.courseTitle}</h1>
+            <h1 className="font-semibold truncate">{data.attempt.courseTitle}</h1>
           </div>
-          <div className="text-sm text-muted-foreground">
-            Answered <span className="text-foreground font-semibold">{answeredCount}</span> / {total}
+          <div className="flex items-center gap-3 text-sm">
+            {remaining !== null && (
+              <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono ${
+                remaining <= 60 ? "bg-destructive/15 text-destructive" : "bg-primary/10 text-primary"
+              }`}>
+                <Timer className="h-3.5 w-3.5" /> {fmt(remaining)}
+              </div>
+            )}
+            <div className="text-muted-foreground">
+              Answered <span className="text-foreground font-semibold">{answeredCount}</span> / {total}
+            </div>
           </div>
         </div>
 
@@ -125,6 +176,20 @@ function ExamPage() {
               );
             })}
           </div>
+
+          <div className="mt-4">
+            {hints[q.id] ? (
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm flex items-start gap-2">
+                <Sparkles className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                <span><span className="font-semibold">Hint: </span>{hints[q.id]}</span>
+              </div>
+            ) : (
+              <Button variant="outline" size="sm" onClick={loadHint} disabled={hintLoading === q.id}>
+                {hintLoading === q.id ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                Show AI hint
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="mt-6 flex items-center justify-between gap-3">
@@ -141,7 +206,7 @@ function ExamPage() {
                 if (answeredCount < total) {
                   if (!confirm(`You've answered ${answeredCount} of ${total}. Submit anyway?`)) return;
                 }
-                submitMut.mutate();
+                submitNow();
               }}
               disabled={submitMut.isPending}
             >
