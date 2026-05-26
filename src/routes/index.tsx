@@ -7,13 +7,13 @@ import { SiteFooter } from "@/components/SiteFooter";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "ReadMe X — Practice past questions. Pass with confidence." },
+      { title: "ReadMe — Practice past questions. Pass with confidence." },
       {
         name: "description",
         content:
           "Timed CBT practice from your course's question bank, with AI hints when you're stuck. Built by students, for students.",
       },
-      { property: "og:title", content: "ReadMe X — Smart CBT practice for students" },
+      { property: "og:title", content: "ReadMe — Smart CBT practice for students" },
       {
         property: "og:description",
         content: "Pick a course, choose your time and question count, and practice with AI-powered hints.",
@@ -63,7 +63,7 @@ function Home() {
         {/* Benefits */}
         <section className="container mx-auto px-4 py-16">
           <div className="text-center max-w-2xl mx-auto mb-10">
-            <h2 className="text-3xl font-bold tracking-tight">Why students choose ReadMe X</h2>
+            <h2 className="text-3xl font-bold tracking-tight">Why students choose ReadMe</h2>
             <p className="text-muted-foreground mt-2">Lightweight. Focused. Built around how you actually study.</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -117,7 +117,7 @@ function Home() {
               <Quote className="h-5 w-5" />
             </div>
             <p className="mt-3 max-w-2xl mx-auto text-muted-foreground">
-              <span className="font-semibold text-foreground">Built by students, for students.</span> ReadMe X is in early access — your feedback shapes what we ship next.
+              <span className="font-semibold text-foreground">Built by students, for students.</span> ReadMe is in early access — your feedback shapes what we ship next.
             </p>
             <a href={FEEDBACK_URL} target="_blank" rel="noreferrer" className="inline-block mt-5">
               <Button variant="outline" className="gap-2"><MessageSquareText className="h-4 w-4" /> Give feedback</Button>

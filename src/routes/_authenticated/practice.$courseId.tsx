@@ -12,7 +12,7 @@ import { getCoursePublic } from "@/lib/courses.functions";
 import { startPractice } from "@/lib/practice.functions";
 
 export const Route = createFileRoute("/_authenticated/practice/$courseId")({
-  head: () => ({ meta: [{ title: "Start practice — ReadMe X" }] }),
+  head: () => ({ meta: [{ title: "Start practice — ReadMe" }] }),
   component: PracticeSetup,
 });
 

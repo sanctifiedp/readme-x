@@ -37,7 +37,7 @@ export function SiteHeader() {
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
             <BookOpen className="h-5 w-5" />
           </span>
-          <span className="tracking-tight">ReadMe X</span>
+          <span className="tracking-tight">ReadMe</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">

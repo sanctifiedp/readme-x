@@ -12,7 +12,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { getCourseBank, addCourseQuestion, deleteCourseQuestion } from "@/lib/courses.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/course/$courseId")({
-  head: () => ({ meta: [{ title: "Edit course bank — ReadMe X" }] }),
+  head: () => ({ meta: [{ title: "Edit course bank — ReadMe" }] }),
   component: CourseBankEditor,
 });
 
