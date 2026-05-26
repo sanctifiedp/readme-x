@@ -83,7 +83,13 @@ export const updateTournament = createServerFn({ method: "POST" })
   }).parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
-    const p: Record<string, unknown> = {};
+    const p: {
+      registration_open?: boolean;
+      status?: "upcoming" | "active" | "completed" | "cancelled";
+      prize_amount?: number;
+      starts_at?: string | null;
+      ends_at?: string | null;
+    } = {};
     if (data.patch.registrationOpen !== undefined) p.registration_open = data.patch.registrationOpen;
     if (data.patch.status !== undefined) p.status = data.patch.status;
     if (data.patch.prizeAmount !== undefined) p.prize_amount = data.patch.prizeAmount;
