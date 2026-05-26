@@ -140,14 +140,15 @@ export const getTournament = createServerFn({ method: "POST" })
       .select("*, courses(code, title)")
       .eq("id", data.id).single();
     if (error || !t) throw new Error("Tournament not found");
-    const [{ count: regCount }, { data: winner }] = await Promise.all([
+    const [{ count: regCount }, { data: winnerRow }] = await Promise.all([
       supabaseAdmin.from("tournament_registrations").select("id", { count: "exact", head: true }).eq("tournament_id", data.id),
-      supabaseAdmin.from("tournament_winners").select("*").eq("tournament_id", data.id).maybeSingle().then(async (res) => {
-        if (!res.data) return res;
-        const { data: prof } = await supabaseAdmin.from("profiles").select("full_name").eq("id", res.data.user_id).maybeSingle();
-        return { ...res, data: { ...res.data, winner_name: prof?.full_name ?? null } };
-      }),
+      supabaseAdmin.from("tournament_winners").select("*").eq("tournament_id", data.id).maybeSingle(),
     ]);
+    let winner: (typeof winnerRow & { winner_name: string | null }) | null = null;
+    if (winnerRow) {
+      const { data: prof } = await supabaseAdmin.from("profiles").select("full_name").eq("id", winnerRow.user_id).maybeSingle();
+      winner = { ...winnerRow, winner_name: prof?.full_name ?? null };
+    }
     const pool = await getDonationPool();
     return { tournament: t, registrationCount: regCount ?? 0, winner, pool };
   });
