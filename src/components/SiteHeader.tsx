@@ -43,6 +43,7 @@ export function SiteHeader() {
         <nav className="hidden md:flex items-center gap-1">
           <Link to="/" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Home</Link>
           <Link to="/courses" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Practice</Link>
+          <Link to="/tournaments" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Tournaments</Link>
           <Link to="/notes" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Notes</Link>
           <Link to="/donate" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Donate</Link>
           {user && (
@@ -95,6 +96,7 @@ export function SiteHeader() {
         <nav className="md:hidden border-t border-border/60 bg-background px-4 py-2 flex flex-col">
           <Link to="/" onClick={() => setOpen(false)} className="py-2 text-sm">Home</Link>
           <Link to="/courses" onClick={() => setOpen(false)} className="py-2 text-sm">Practice</Link>
+          <Link to="/tournaments" onClick={() => setOpen(false)} className="py-2 text-sm">Tournaments</Link>
           <Link to="/notes" onClick={() => setOpen(false)} className="py-2 text-sm">Notes</Link>
           <Link to="/donate" onClick={() => setOpen(false)} className="py-2 text-sm">Donate</Link>
           {user && (
