@@ -142,7 +142,11 @@ export const getTournament = createServerFn({ method: "POST" })
     if (error || !t) throw new Error("Tournament not found");
     const [{ count: regCount }, { data: winner }] = await Promise.all([
       supabaseAdmin.from("tournament_registrations").select("id", { count: "exact", head: true }).eq("tournament_id", data.id),
-      supabaseAdmin.from("tournament_winners").select("*").eq("tournament_id", data.id).maybeSingle(),
+      supabaseAdmin.from("tournament_winners").select("*").eq("tournament_id", data.id).maybeSingle().then(async (res) => {
+        if (!res.data) return res;
+        const { data: prof } = await supabaseAdmin.from("profiles").select("full_name").eq("id", res.data.user_id).maybeSingle();
+        return { ...res, data: { ...res.data, winner_name: prof?.full_name ?? null } };
+      }),
     ]);
     const pool = await getDonationPool();
     return { tournament: t, registrationCount: regCount ?? 0, winner, pool };
@@ -395,10 +399,16 @@ export const approvePayout = createServerFn({ method: "POST" })
 export const listAllTimeWinners = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabaseAdmin
     .from("tournament_winners")
-    .select("id, prize_amount, decided_at, payout_status, tournaments(title, target_school, target_department, target_level, courses(code)), profiles:user_id(full_name)")
+    .select("id, user_id, prize_amount, decided_at, payout_status, tournaments(title, target_school, target_department, target_level, courses(code))")
     .order("decided_at", { ascending: false });
   if (error) throw new Error(error.message);
-  return data ?? [];
+  const ids = Array.from(new Set((data ?? []).map((d) => d.user_id)));
+  const names = new Map<string, string>();
+  if (ids.length) {
+    const { data: profs } = await supabaseAdmin.from("profiles").select("id, full_name").in("id", ids);
+    profs?.forEach((p) => names.set(p.id, p.full_name ?? ""));
+  }
+  return (data ?? []).map((w) => ({ ...w, winner_name: names.get(w.user_id) ?? null }));
 });
 
 export const listPendingPayouts = createServerFn({ method: "GET" })
@@ -407,11 +417,17 @@ export const listPendingPayouts = createServerFn({ method: "GET" })
     await assertAdmin(context.userId);
     const { data, error } = await supabaseAdmin
       .from("tournament_winners")
-      .select("id, prize_amount, payout_status, payout_details, decided_at, tournaments(title), profiles:user_id(full_name, email)")
+      .select("id, user_id, prize_amount, payout_status, payout_details, decided_at, tournaments(title)")
       .in("payout_status", ["pending_form", "pending_approval"])
       .order("decided_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return data ?? [];
+    const ids = Array.from(new Set((data ?? []).map((d) => d.user_id)));
+    const profs = new Map<string, { full_name: string | null; email: string | null }>();
+    if (ids.length) {
+      const { data: rows } = await supabaseAdmin.from("profiles").select("id, full_name, email").in("id", ids);
+      rows?.forEach((p) => profs.set(p.id, { full_name: p.full_name, email: p.email }));
+    }
+    return (data ?? []).map((w) => ({ ...w, winner: profs.get(w.user_id) ?? null }));
   });
 
 export const listMyTournamentState = createServerFn({ method: "POST" })
