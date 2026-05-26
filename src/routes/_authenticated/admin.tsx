@@ -16,7 +16,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
 import { SiteHeader } from "@/components/SiteHeader";
-import { adminDashboard, uploadMaterial, generateQuestions, promoteToAdmin, revokeAdmin, getMyRoles } from "@/lib/admin.functions";
+import { adminDashboard, uploadMaterial, generateQuestions, promoteToAdmin, revokeAdmin, getMyRoles, createCourse } from "@/lib/admin.functions";
 import { createCourseFull, deleteCourse } from "@/lib/courses.functions";
 import { listPendingDonations, decideDonation } from "@/lib/donations.functions";
 import { listNotes, createNote, deleteNote } from "@/lib/notes.functions";
