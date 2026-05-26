@@ -1,101 +1,105 @@
-# ReadMe X — v2 plan
+# Plan — Rebrand + 3 Batches
 
-## 1. Question banks replace exams
+## 0. Branding: "ReadMe X" → "ReadMe"
+Sweep all UI strings (headers, footers, titles, `<head>` meta, hero copy, dashboard greetings, auth pages, etc.) across 13 files identified. No logic changes — pure copy edit.
 
-Pivot the exam concept to **per-course question banks**.
-
-- `questions` table already exists (`course_id`, `prompt`, `options`, `correct_index`). Add `hint TEXT NULL` for cached AI hints.
-- Admin uploads questions directly to a **course** (cap **500/course**).
-- Drop the `exams` editor concept; existing `exams` rows are migrated: each exam's questions are re-pointed to `exam.course_id` (already set) and the exams table is hidden from UI (kept in DB for safety).
-- New browse page: list **courses** (with school/department/level filter + search). Each card → "Practice".
-
-## 2. Practice flow (student)
-
-On a course's Practice screen:
-- Inputs: **# of questions** (1–70, capped at bank size) and **time limit** (1–30 min).
-- Server function `startPractice({ courseId, count, minutes })`:
-  - Randomly picks `count` question IDs from the course bank.
-  - Creates an `exam_attempts` row (reuse table) with `question_ids`, `total = count`, new column `duration_seconds`, new `expires_at`.
-- Take screen:
-  - Countdown timer; auto-submits at 0.
-  - "Show hint" button per question → calls `getHint({ questionId })`. Server checks cached `hint` column; if empty, generates a one-sentence hint via Lovable AI (`google/gemini-3-flash-preview`), stores it, returns it. Subsequent users reuse the cached hint (cheap + consistent).
-- Submit → score + redirect to results.
-
-## 3. Review on results page
-
-Rework `results.$attemptId.tsx` to show, per question:
-- The prompt
-- All options with: ✓ user's answer (green if correct / red if wrong) and ✓ correct answer highlighted
-- The AI hint (if it was generated during the attempt)
-- Final score + time used
-
-## 4. Fix admin editor + audit other pages
-
-- The route `/admin/exam/$examId` exists and is correctly wired, but in the new model we rename it to `/admin/course/$courseId` and edit the **course's question bank** (the actual user complaint). The editor will:
-  - Show current count `/ 500`.
-  - Add question form (prompt + 4 options + correct index).
-  - List + delete questions.
-  - Optional: "(Re)generate hint" button per question (admin-only).
-- Admin dashboard exam tab → replaced with **Courses** tab: create course (code, title, school, department, level, description), then "Edit questions" links to new editor.
-- Audit pass on existing pages and fix any broken loaders/links surfaced by the pivot:
-  - `take.$examId.tsx` → replaced by `practice.$courseId.tsx`.
-  - `exam.$attemptId.tsx` → kept (works on attempts), updated for timer + hints.
-  - Old `exams.tsx` route → redirects to new `/courses` browse.
-  - Verify dashboard, donate, notes, chat still load cleanly.
-
-## 5. Landing page refresh (light, not a redesign)
-
-Rebuild `src/routes/index.tsx`:
-1. **Hero**: H1 "Practice past questions. Pass with confidence." + 1-sentence sub ("Timed CBT practice from your course's question bank, with AI hints when you're stuck."). Primary CTA "Start practicing" (→ `/courses`), secondary "Browse notes".
-2. **Benefits** (4 cards): timed practice you control · 500-question banks per course · AI hint on every question · review answers after every attempt.
-3. **Trust strip**: "Built by students, for students · Early access · Your feedback shapes the roadmap."
-4. **Feature preview** mock (static): screenshot-style card of a practice question + hint.
-5. **Coming soon**: tagged placeholders (peer study rooms, smart recommendations).
-6. **Feedback CTA**: button → the Google Form link.
-7. **Secondary CTA** at bottom.
-- Mobile: tighter spacing, full-width CTAs, single-column.
-- Keep existing tokens in `src/styles.css`; small polish to type scale + spacing only.
-
-## 6. Grok AI placeholder
-
-In `/admin` add a small **AI Settings** section:
-- Read-only note: "Hints are powered by Lovable AI."
-- Disabled input "Grok API key (coming soon)" with helper text.
-- No DB / secret writes — purely a placeholder so the user can see the planned slot.
-
-## 7. Feedback button
-
-- "Give feedback" link in `SiteHeader` (desktop) + `SiteFooter` + landing CTA → `https://docs.google.com/forms/d/e/1FAIpQLSdSYgpAaMAFZXmw0HSl38jzQ7DGoogXiR9BVrcCOxDHgyTZ9Q/viewform`. `target="_blank" rel="noreferrer"`.
+## 0b. Super admin guarantee
+Confirm `adeyigbeminiyi414@gmail.com` has both `admin` + `super_admin` rows in `user_roles` (the `handle_new_user` trigger already grants them on signup; we'll also run a one-off upsert to cover the case where the account already exists).
 
 ---
 
-## Technical section
+## 🔴 BATCH 1 — Tournaments, Auto-Winners, Donation Gating
 
-**Migration**
-- `ALTER TABLE questions ADD COLUMN hint TEXT;`
-- `ALTER TABLE exam_attempts ADD COLUMN duration_seconds INT NOT NULL DEFAULT 1800, ADD COLUMN expires_at TIMESTAMPTZ;`
-- Add trigger / server check: refuse insert into `questions` when course already has 500 rows.
-- Keep `exams` + admin policies untouched (still RLS-protected) — just hidden from UI.
+### Schema (one migration)
+- `tournaments` — title, description, target_school, target_department, target_level, prize_amount, min_participants, min_donation_pool, registration_open (bool), status (`upcoming`|`active`|`completed`|`cancelled`), course_id (question pool), question_count, duration_seconds, starts_at, ends_at, created_by, winner_user_id, winner_decided_at.
+- `tournament_registrations` — tournament_id, user_id (unique pair). RLS: user inserts own row only if their profile (school/dept/level) matches the tournament; SELECT for participants + admins.
+- `tournament_attempts` — tournament_id, user_id (unique pair), question_ids jsonb, score, wrong_count, duration_used_seconds, started_at, submitted_at, expires_at. One attempt per user.
+- `tournament_winners` (all-time list) — tournament_id, user_id, prize_amount, payout_status (`pending_form`|`pending_approval`|`paid`), payout_details jsonb, decided_at, approved_by, approved_at. Public-safe view (name + course + prize + date).
+- Add `bank_name`, `account_number`, `account_name`, `phone` payout columns or store inside `payout_details` jsonb.
 
-**New / changed files**
-- `src/lib/courses.functions.ts` — listCourses (filters), createCourse, updateCourse, deleteCourse, getCourseBank, addCourseQuestion, deleteCourseQuestion, regenerateHint.
-- `src/lib/practice.functions.ts` — startPractice, getHint (Lovable AI, on-demand, cached), submit (reuse existing logic).
-- `src/routes/courses.tsx` — public browse (filters).
-- `src/routes/_authenticated/practice.$courseId.tsx` — pick count + time, start.
-- `src/routes/_authenticated/admin/course.$courseId.tsx` — bank editor (replaces exam editor).
-- `src/routes/_authenticated/exam.$attemptId.tsx` — add timer + hint button.
-- `src/routes/_authenticated/results.$attemptId.tsx` — full review UI.
-- `src/routes/index.tsx` — rewritten landing.
-- `SiteHeader.tsx` / `SiteFooter.tsx` — feedback link, nav updated to `/courses` + `/notes`.
-- `src/routes/exams.tsx` → redirect to `/courses` (kept for backward compat).
+### Server functions (`src/lib/tournaments.functions.ts`)
+- `listTournaments({ filter })`, `getTournament({ id })` — public.
+- `createTournament` / `updateTournament` / `setRegistrationOpen` / `setStatus` — admin-gated.
+- `registerForTournament({ id })` — checks profile match, registration open, status=upcoming|active.
+- `startTournamentAttempt({ id })` — eligibility + min-donation-pool check (sum of approved donations minus already-paid prizes ≥ tournament.prize_amount) + min-participants check; picks random questions from course bank, writes attempt with `expires_at`.
+- `submitTournamentAttempt({ attemptId, answers })` — scores, sets submitted_at, wrong_count, duration_used.
+- `finalizeTournament({ id })` — admin trigger OR auto-call when `ends_at` passes: rank attempts by (score desc, duration_used asc, wrong_count asc, submitted_at asc), write `tournament_winners` row with `payout_status='pending_form'`, set tournament `status='completed'`, `winner_user_id`. No-op if zero valid attempts or below min participants.
+- `submitPayoutForm({ tournamentId, details })` — winner only.
+- `approvePayout({ winnerId })` — admin; marks `paid`.
+- `listAllTimeWinners()` — public.
 
-**AI hint call** (server fn, on-demand, cached in `questions.hint`):
-```
-POST https://ai.gateway.lovable.dev/v1/chat/completions
-model: google/gemini-3-flash-preview
-system: "Give a single short sentence hint (max 20 words) that nudges the student toward the answer without revealing it."
-user: prompt + options
-```
-Handles 429/402 with toast on the client.
+### Routes
+- `/tournaments` — public list (filter by school/dept/level/status).
+- `/tournaments/$id` — detail page (eligibility badge, prize, status, register / start button, leaderboard after completion).
+- `/_authenticated/tournament/$attemptId` — exam UI (reuse exam.$attemptId pattern with timer + auto-submit).
+- `/_authenticated/admin/tournaments` — admin CRUD + finalize button + payout approvals.
+- Add donation-funded note component used on tournament pages and donate page.
 
-**Admin editor bug**: in the new model we ship the new route `/admin/course/$courseId` and update the admin link, so the broken flow is replaced wholesale rather than patched. I'll smoke-test create-course → add-questions → start-practice → submit → review.
+### Donation gating
+Server-side helper `getDonationPool()` = sum(approved donations) − sum(paid prizes). Used in `startTournamentAttempt` (block if pool < prize) and shown on tournament detail.
+
+---
+
+## 🟠 BATCH 2 — Profile, School Control, Auth
+
+### Schema
+- `schools`, `departments` (school_id), `levels` (school_id or global) — managed by super_admin only. RLS: public SELECT, super_admin ALL.
+- `profiles` add: `avatar_url`, `profile_edit_count_this_year int default 0`, `profile_edit_year int`, ensure school/dept/level are FKs to controlled tables (or text validated against them server-side to avoid breaking existing rows — go with server-side validation against the lookup tables to keep it simple).
+- Avatar storage bucket `avatars` (public read, user writes own folder).
+
+### Server fns
+- `listSchools/Departments/Levels` (public).
+- Super-admin CRUD for each.
+- `updateProfile` — server enforces ≤2 edits/year (resets when year changes); only allows values present in lookup tables.
+- `getProfile` — includes exam history (existing `exam_attempts` joined to courses) + bookmarked courses (Batch 3).
+
+### Routes
+- `/_authenticated/profile` — view/edit profile with avatar upload, edit counter.
+- `/_authenticated/admin/schools` — super-admin only: manage schools/departments/levels.
+
+### Auth
+- `/forgot-password` page → `supabase.auth.resetPasswordForEmail` with `redirectTo: origin + '/reset-password'`.
+- `/reset-password` page → `supabase.auth.updateUser({ password })`.
+- `/_authenticated/profile` → "Change password" section using `updateUser`.
+- Use existing Supabase default auth emails (no custom email infra needed unless requested).
+
+---
+
+## 🟡 BATCH 3 — Bookmarks, Friends, Notifications
+
+### Schema
+- `course_bookmarks` (user_id, course_id, unique).
+- `friendships` (requester_id, addressee_id, status `pending|accepted|blocked`, unique pair).
+- `challenges` (from_user, to_user(s) jsonb, course_id, question_count, duration_seconds, status `pending|active|completed|declined`, expires_at). Per-participant attempts reuse `exam_attempts` with a `challenge_id` column added.
+- `announcements` (title, body, audience `all|school|department|level`, target filters jsonb, created_by, created_at).
+- `announcement_reads` (user_id, announcement_id) for unread badge.
+
+### Server fns
+- `toggleBookmark`, `listBookmarks`.
+- `searchUsers(q)` (returns name + school/dept/level, no email), `sendFriendRequest`, `respondToFriendRequest`, `listFriends`, `listFriendRequests`.
+- `createChallenge`, `listMyChallenges`, `acceptChallenge` (starts attempt).
+- `createAnnouncement` (admin), `listAnnouncements` (filtered by user's profile), `markAnnouncementRead`.
+
+### Routes
+- `/_authenticated/profile` → "Saved courses" tab.
+- `/_authenticated/friends` — search, requests, list, "Challenge" button.
+- `/_authenticated/challenges` — incoming + active.
+- `/_authenticated/admin/announcements` — composer.
+- Bell icon in `SiteHeader` → dropdown of announcements with unread badge.
+- Add star button on `/courses` and `/practice/$courseId`.
+
+---
+
+## Technical notes
+- Stack: existing TanStack Start + `createServerFn` + Supabase RLS pattern.
+- All admin/super-admin checks via existing `has_role(uid, role)`.
+- Auto-finalize tournaments lazily: when anyone visits the tournament page after `ends_at`, call `finalizeTournament` server-side if not yet finalized (avoids needing pg_cron).
+- Migrations split per batch to keep approvals reviewable.
+
+## Delivery order
+1. Rebrand sweep + super-admin upsert (small).
+2. Batch 1 migration → approve → code.
+3. Batch 2 migration → approve → code.
+4. Batch 3 migration → approve → code.
+
+Confirm to proceed, or tell me which batch to drop/reorder.

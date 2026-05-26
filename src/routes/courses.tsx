@@ -12,7 +12,7 @@ import { listCoursesPublic } from "@/lib/courses.functions";
 export const Route = createFileRoute("/courses")({
   head: () => ({
     meta: [
-      { title: "Browse courses — ReadMe X" },
+      { title: "Browse courses — ReadMe" },
       { name: "description", content: "Find your course and start timed practice from its question bank." },
     ],
   }),

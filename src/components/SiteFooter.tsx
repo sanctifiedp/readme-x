@@ -11,7 +11,7 @@ export function SiteFooter() {
     <footer className="border-t border-border/60 bg-muted/30">
       <div className="container mx-auto px-4 py-10 grid gap-8 md:grid-cols-3">
         <div>
-          <h3 className="font-semibold mb-2">ReadMe X</h3>
+          <h3 className="font-semibold mb-2">ReadMe</h3>
           <p className="text-sm text-muted-foreground">
             Timed CBT practice from your course's question bank — with AI hints when you're stuck.
             Built by students, for students.
@@ -46,7 +46,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-border/60 py-4 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} ReadMe X — Built for students. All rights reserved.
+        © {new Date().getFullYear()} ReadMe — Built for students. All rights reserved.
       </div>
     </footer>
   );
