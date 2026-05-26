@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TournamentsRouteImport } from './routes/tournaments'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as ExamsRouteImport } from './routes/exams'
 import { Route as DonateRouteImport } from './routes/donate'
@@ -16,16 +17,23 @@ import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TournamentsIdRouteImport } from './routes/tournaments.$id'
 import { Route as TakeExamIdRouteImport } from './routes/take.$examId'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedTournamentAttemptIdRouteImport } from './routes/_authenticated/tournament.$attemptId'
 import { Route as AuthenticatedResultsAttemptIdRouteImport } from './routes/_authenticated/results.$attemptId'
 import { Route as AuthenticatedPracticeCourseIdRouteImport } from './routes/_authenticated/practice.$courseId'
 import { Route as AuthenticatedExamAttemptIdRouteImport } from './routes/_authenticated/exam.$attemptId'
 import { Route as AuthenticatedCoursesCodeRouteImport } from './routes/_authenticated/courses.$code'
 import { Route as AuthenticatedAdminCourseCourseIdRouteImport } from './routes/_authenticated/admin.course.$courseId'
 
+const TournamentsRoute = TournamentsRouteImport.update({
+  id: '/tournaments',
+  path: '/tournaments',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NotesRoute = NotesRouteImport.update({
   id: '/notes',
   path: '/notes',
@@ -60,6 +68,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TournamentsIdRoute = TournamentsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => TournamentsRoute,
+} as any)
 const TakeExamIdRoute = TakeExamIdRouteImport.update({
   id: '/take/$examId',
   path: '/take/$examId',
@@ -80,6 +93,12 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedTournamentAttemptIdRoute =
+  AuthenticatedTournamentAttemptIdRouteImport.update({
+    id: '/tournament/$attemptId',
+    path: '/tournament/$attemptId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedResultsAttemptIdRoute =
   AuthenticatedResultsAttemptIdRouteImport.update({
     id: '/results/$attemptId',
@@ -118,14 +137,17 @@ export interface FileRoutesByFullPath {
   '/donate': typeof DonateRoute
   '/exams': typeof ExamsRoute
   '/notes': typeof NotesRoute
+  '/tournaments': typeof TournamentsRouteWithChildren
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/chat': typeof AuthenticatedChatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/take/$examId': typeof TakeExamIdRoute
+  '/tournaments/$id': typeof TournamentsIdRoute
   '/courses/$code': typeof AuthenticatedCoursesCodeRoute
   '/exam/$attemptId': typeof AuthenticatedExamAttemptIdRoute
   '/practice/$courseId': typeof AuthenticatedPracticeCourseIdRoute
   '/results/$attemptId': typeof AuthenticatedResultsAttemptIdRoute
+  '/tournament/$attemptId': typeof AuthenticatedTournamentAttemptIdRoute
   '/admin/course/$courseId': typeof AuthenticatedAdminCourseCourseIdRoute
 }
 export interface FileRoutesByTo {
@@ -135,14 +157,17 @@ export interface FileRoutesByTo {
   '/donate': typeof DonateRoute
   '/exams': typeof ExamsRoute
   '/notes': typeof NotesRoute
+  '/tournaments': typeof TournamentsRouteWithChildren
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/chat': typeof AuthenticatedChatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/take/$examId': typeof TakeExamIdRoute
+  '/tournaments/$id': typeof TournamentsIdRoute
   '/courses/$code': typeof AuthenticatedCoursesCodeRoute
   '/exam/$attemptId': typeof AuthenticatedExamAttemptIdRoute
   '/practice/$courseId': typeof AuthenticatedPracticeCourseIdRoute
   '/results/$attemptId': typeof AuthenticatedResultsAttemptIdRoute
+  '/tournament/$attemptId': typeof AuthenticatedTournamentAttemptIdRoute
   '/admin/course/$courseId': typeof AuthenticatedAdminCourseCourseIdRoute
 }
 export interface FileRoutesById {
@@ -154,14 +179,17 @@ export interface FileRoutesById {
   '/donate': typeof DonateRoute
   '/exams': typeof ExamsRoute
   '/notes': typeof NotesRoute
+  '/tournaments': typeof TournamentsRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/chat': typeof AuthenticatedChatRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/take/$examId': typeof TakeExamIdRoute
+  '/tournaments/$id': typeof TournamentsIdRoute
   '/_authenticated/courses/$code': typeof AuthenticatedCoursesCodeRoute
   '/_authenticated/exam/$attemptId': typeof AuthenticatedExamAttemptIdRoute
   '/_authenticated/practice/$courseId': typeof AuthenticatedPracticeCourseIdRoute
   '/_authenticated/results/$attemptId': typeof AuthenticatedResultsAttemptIdRoute
+  '/_authenticated/tournament/$attemptId': typeof AuthenticatedTournamentAttemptIdRoute
   '/_authenticated/admin/course/$courseId': typeof AuthenticatedAdminCourseCourseIdRoute
 }
 export interface FileRouteTypes {
@@ -173,14 +201,17 @@ export interface FileRouteTypes {
     | '/donate'
     | '/exams'
     | '/notes'
+    | '/tournaments'
     | '/admin'
     | '/chat'
     | '/dashboard'
     | '/take/$examId'
+    | '/tournaments/$id'
     | '/courses/$code'
     | '/exam/$attemptId'
     | '/practice/$courseId'
     | '/results/$attemptId'
+    | '/tournament/$attemptId'
     | '/admin/course/$courseId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -190,14 +221,17 @@ export interface FileRouteTypes {
     | '/donate'
     | '/exams'
     | '/notes'
+    | '/tournaments'
     | '/admin'
     | '/chat'
     | '/dashboard'
     | '/take/$examId'
+    | '/tournaments/$id'
     | '/courses/$code'
     | '/exam/$attemptId'
     | '/practice/$courseId'
     | '/results/$attemptId'
+    | '/tournament/$attemptId'
     | '/admin/course/$courseId'
   id:
     | '__root__'
@@ -208,14 +242,17 @@ export interface FileRouteTypes {
     | '/donate'
     | '/exams'
     | '/notes'
+    | '/tournaments'
     | '/_authenticated/admin'
     | '/_authenticated/chat'
     | '/_authenticated/dashboard'
     | '/take/$examId'
+    | '/tournaments/$id'
     | '/_authenticated/courses/$code'
     | '/_authenticated/exam/$attemptId'
     | '/_authenticated/practice/$courseId'
     | '/_authenticated/results/$attemptId'
+    | '/_authenticated/tournament/$attemptId'
     | '/_authenticated/admin/course/$courseId'
   fileRoutesById: FileRoutesById
 }
@@ -227,11 +264,19 @@ export interface RootRouteChildren {
   DonateRoute: typeof DonateRoute
   ExamsRoute: typeof ExamsRoute
   NotesRoute: typeof NotesRoute
+  TournamentsRoute: typeof TournamentsRouteWithChildren
   TakeExamIdRoute: typeof TakeExamIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tournaments': {
+      id: '/tournaments'
+      path: '/tournaments'
+      fullPath: '/tournaments'
+      preLoaderRoute: typeof TournamentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/notes': {
       id: '/notes'
       path: '/notes'
@@ -281,6 +326,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tournaments/$id': {
+      id: '/tournaments/$id'
+      path: '/$id'
+      fullPath: '/tournaments/$id'
+      preLoaderRoute: typeof TournamentsIdRouteImport
+      parentRoute: typeof TournamentsRoute
+    }
     '/take/$examId': {
       id: '/take/$examId'
       path: '/take/$examId'
@@ -307,6 +359,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/tournament/$attemptId': {
+      id: '/_authenticated/tournament/$attemptId'
+      path: '/tournament/$attemptId'
+      fullPath: '/tournament/$attemptId'
+      preLoaderRoute: typeof AuthenticatedTournamentAttemptIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/results/$attemptId': {
@@ -366,6 +425,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedExamAttemptIdRoute: typeof AuthenticatedExamAttemptIdRoute
   AuthenticatedPracticeCourseIdRoute: typeof AuthenticatedPracticeCourseIdRoute
   AuthenticatedResultsAttemptIdRoute: typeof AuthenticatedResultsAttemptIdRoute
+  AuthenticatedTournamentAttemptIdRoute: typeof AuthenticatedTournamentAttemptIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -376,10 +436,23 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedExamAttemptIdRoute: AuthenticatedExamAttemptIdRoute,
   AuthenticatedPracticeCourseIdRoute: AuthenticatedPracticeCourseIdRoute,
   AuthenticatedResultsAttemptIdRoute: AuthenticatedResultsAttemptIdRoute,
+  AuthenticatedTournamentAttemptIdRoute: AuthenticatedTournamentAttemptIdRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
+)
+
+interface TournamentsRouteChildren {
+  TournamentsIdRoute: typeof TournamentsIdRoute
+}
+
+const TournamentsRouteChildren: TournamentsRouteChildren = {
+  TournamentsIdRoute: TournamentsIdRoute,
+}
+
+const TournamentsRouteWithChildren = TournamentsRoute._addFileChildren(
+  TournamentsRouteChildren,
 )
 
 const rootRouteChildren: RootRouteChildren = {
@@ -390,6 +463,7 @@ const rootRouteChildren: RootRouteChildren = {
   DonateRoute: DonateRoute,
   ExamsRoute: ExamsRoute,
   NotesRoute: NotesRoute,
+  TournamentsRoute: TournamentsRouteWithChildren,
   TakeExamIdRoute: TakeExamIdRoute,
 }
 export const routeTree = rootRouteImport

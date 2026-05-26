@@ -142,7 +142,7 @@ export const getTournament = createServerFn({ method: "POST" })
     if (error || !t) throw new Error("Tournament not found");
     const [{ count: regCount }, { data: winner }] = await Promise.all([
       supabaseAdmin.from("tournament_registrations").select("id", { count: "exact", head: true }).eq("tournament_id", data.id),
-      supabaseAdmin.from("tournament_winners").select("*, profiles:user_id(full_name)").eq("tournament_id", data.id).maybeSingle(),
+      supabaseAdmin.from("tournament_winners").select("*").eq("tournament_id", data.id).maybeSingle(),
     ]);
     const pool = await getDonationPool();
     return { tournament: t, registrationCount: regCount ?? 0, winner, pool };
