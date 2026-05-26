@@ -471,6 +471,203 @@ export type Database = {
         }
         Relationships: []
       }
+      tournament_attempts: {
+        Row: {
+          duration_used_seconds: number | null
+          expires_at: string
+          id: string
+          question_ids: Json
+          score: number | null
+          started_at: string
+          submitted_at: string | null
+          tournament_id: string
+          user_id: string
+          wrong_count: number | null
+        }
+        Insert: {
+          duration_used_seconds?: number | null
+          expires_at: string
+          id?: string
+          question_ids: Json
+          score?: number | null
+          started_at?: string
+          submitted_at?: string | null
+          tournament_id: string
+          user_id: string
+          wrong_count?: number | null
+        }
+        Update: {
+          duration_used_seconds?: number | null
+          expires_at?: string
+          id?: string
+          question_ids?: Json
+          score?: number | null
+          started_at?: string
+          submitted_at?: string | null
+          tournament_id?: string
+          user_id?: string
+          wrong_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_attempts_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_registrations: {
+        Row: {
+          created_at: string
+          id: string
+          tournament_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          tournament_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          tournament_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_registrations_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_winners: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          decided_at: string
+          id: string
+          payout_details: Json | null
+          payout_status: string
+          prize_amount: number
+          tournament_id: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          decided_at?: string
+          id?: string
+          payout_details?: Json | null
+          payout_status?: string
+          prize_amount: number
+          tournament_id: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          decided_at?: string
+          id?: string
+          payout_details?: Json | null
+          payout_status?: string
+          prize_amount?: number
+          tournament_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_winners_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: true
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournaments: {
+        Row: {
+          course_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          duration_seconds: number
+          ends_at: string | null
+          id: string
+          min_donation_pool: number
+          min_participants: number
+          prize_amount: number
+          question_count: number
+          registration_open: boolean
+          starts_at: string | null
+          status: string
+          target_department: string
+          target_level: string
+          target_school: string
+          title: string
+          winner_decided_at: string | null
+          winner_user_id: string | null
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_seconds?: number
+          ends_at?: string | null
+          id?: string
+          min_donation_pool?: number
+          min_participants?: number
+          prize_amount: number
+          question_count?: number
+          registration_open?: boolean
+          starts_at?: string | null
+          status?: string
+          target_department: string
+          target_level: string
+          target_school: string
+          title: string
+          winner_decided_at?: string | null
+          winner_user_id?: string | null
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_seconds?: number
+          ends_at?: string | null
+          id?: string
+          min_donation_pool?: number
+          min_participants?: number
+          prize_amount?: number
+          question_count?: number
+          registration_open?: boolean
+          starts_at?: string | null
+          status?: string
+          target_department?: string
+          target_level?: string
+          target_school?: string
+          title?: string
+          winner_decided_at?: string | null
+          winner_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournaments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
