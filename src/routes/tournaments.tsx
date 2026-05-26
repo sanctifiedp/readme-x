@@ -96,7 +96,7 @@ function TournamentsPage() {
             winners!.map((w) => (
               <div key={w.id} className="p-4 flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="font-medium truncate">{w.profiles?.full_name ?? "Winner"}</div>
+                  <div className="font-medium truncate">{w.winner_name ?? "Winner"}</div>
                   <div className="text-xs text-muted-foreground truncate">{w.tournaments?.title} · {w.tournaments?.courses?.code}</div>
                 </div>
                 <div className="text-right">

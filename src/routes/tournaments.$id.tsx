@@ -137,7 +137,7 @@ function TournamentDetail() {
             <div className="flex items-center gap-2 text-primary font-semibold">
               <Trophy className="h-5 w-5" /> Winner
             </div>
-            <p className="mt-2">{data.winner.profiles?.full_name ?? "Winner"} · ₦{Number(data.winner.prize_amount).toLocaleString()}</p>
+            <p className="mt-2">{data.winner.winner_name ?? "Winner"} · ₦{Number(data.winner.prize_amount).toLocaleString()}</p>
             <p className="text-xs text-muted-foreground mt-1">Status: {data.winner.payout_status.replace("_", " ")}</p>
           </div>
         )}
