@@ -112,6 +112,11 @@ function AuthPage() {
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Sign in
                 </Button>
+                <p className="text-center text-sm">
+                  <Link to="/forgot-password" className="text-muted-foreground hover:text-primary">
+                    Forgot your password?
+                  </Link>
+                </p>
               </form>
             </TabsContent>
 
