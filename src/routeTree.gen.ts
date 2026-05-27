@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TournamentsRouteImport } from './routes/tournaments'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as NotesRouteImport } from './routes/notes'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ExamsRouteImport } from './routes/exams'
 import { Route as DonateRouteImport } from './routes/donate'
 import { Route as CoursesRouteImport } from './routes/courses'
@@ -19,6 +21,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TournamentsIdRouteImport } from './routes/tournaments.$id'
 import { Route as TakeExamIdRouteImport } from './routes/take.$examId'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -34,9 +37,19 @@ const TournamentsRoute = TournamentsRouteImport.update({
   path: '/tournaments',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NotesRoute = NotesRouteImport.update({
   id: '/notes',
   path: '/notes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExamsRoute = ExamsRouteImport.update({
@@ -77,6 +90,11 @@ const TakeExamIdRoute = TakeExamIdRouteImport.update({
   id: '/take/$examId',
   path: '/take/$examId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
@@ -136,11 +154,14 @@ export interface FileRoutesByFullPath {
   '/courses': typeof CoursesRoute
   '/donate': typeof DonateRoute
   '/exams': typeof ExamsRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/notes': typeof NotesRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/tournaments': typeof TournamentsRouteWithChildren
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/chat': typeof AuthenticatedChatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/take/$examId': typeof TakeExamIdRoute
   '/tournaments/$id': typeof TournamentsIdRoute
   '/courses/$code': typeof AuthenticatedCoursesCodeRoute
@@ -156,11 +177,14 @@ export interface FileRoutesByTo {
   '/courses': typeof CoursesRoute
   '/donate': typeof DonateRoute
   '/exams': typeof ExamsRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/notes': typeof NotesRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/tournaments': typeof TournamentsRouteWithChildren
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/chat': typeof AuthenticatedChatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/take/$examId': typeof TakeExamIdRoute
   '/tournaments/$id': typeof TournamentsIdRoute
   '/courses/$code': typeof AuthenticatedCoursesCodeRoute
@@ -178,11 +202,14 @@ export interface FileRoutesById {
   '/courses': typeof CoursesRoute
   '/donate': typeof DonateRoute
   '/exams': typeof ExamsRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/notes': typeof NotesRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/tournaments': typeof TournamentsRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/chat': typeof AuthenticatedChatRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/take/$examId': typeof TakeExamIdRoute
   '/tournaments/$id': typeof TournamentsIdRoute
   '/_authenticated/courses/$code': typeof AuthenticatedCoursesCodeRoute
@@ -200,11 +227,14 @@ export interface FileRouteTypes {
     | '/courses'
     | '/donate'
     | '/exams'
+    | '/forgot-password'
     | '/notes'
+    | '/reset-password'
     | '/tournaments'
     | '/admin'
     | '/chat'
     | '/dashboard'
+    | '/profile'
     | '/take/$examId'
     | '/tournaments/$id'
     | '/courses/$code'
@@ -220,11 +250,14 @@ export interface FileRouteTypes {
     | '/courses'
     | '/donate'
     | '/exams'
+    | '/forgot-password'
     | '/notes'
+    | '/reset-password'
     | '/tournaments'
     | '/admin'
     | '/chat'
     | '/dashboard'
+    | '/profile'
     | '/take/$examId'
     | '/tournaments/$id'
     | '/courses/$code'
@@ -241,11 +274,14 @@ export interface FileRouteTypes {
     | '/courses'
     | '/donate'
     | '/exams'
+    | '/forgot-password'
     | '/notes'
+    | '/reset-password'
     | '/tournaments'
     | '/_authenticated/admin'
     | '/_authenticated/chat'
     | '/_authenticated/dashboard'
+    | '/_authenticated/profile'
     | '/take/$examId'
     | '/tournaments/$id'
     | '/_authenticated/courses/$code'
@@ -263,7 +299,9 @@ export interface RootRouteChildren {
   CoursesRoute: typeof CoursesRoute
   DonateRoute: typeof DonateRoute
   ExamsRoute: typeof ExamsRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   NotesRoute: typeof NotesRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   TournamentsRoute: typeof TournamentsRouteWithChildren
   TakeExamIdRoute: typeof TakeExamIdRoute
 }
@@ -277,11 +315,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TournamentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/notes': {
       id: '/notes'
       path: '/notes'
       fullPath: '/notes'
       preLoaderRoute: typeof NotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/exams': {
@@ -339,6 +391,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/take/$examId'
       preLoaderRoute: typeof TakeExamIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
@@ -421,6 +480,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedChatRoute: typeof AuthenticatedChatRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedCoursesCodeRoute: typeof AuthenticatedCoursesCodeRoute
   AuthenticatedExamAttemptIdRoute: typeof AuthenticatedExamAttemptIdRoute
   AuthenticatedPracticeCourseIdRoute: typeof AuthenticatedPracticeCourseIdRoute
@@ -432,6 +492,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedChatRoute: AuthenticatedChatRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedCoursesCodeRoute: AuthenticatedCoursesCodeRoute,
   AuthenticatedExamAttemptIdRoute: AuthenticatedExamAttemptIdRoute,
   AuthenticatedPracticeCourseIdRoute: AuthenticatedPracticeCourseIdRoute,
@@ -462,7 +523,9 @@ const rootRouteChildren: RootRouteChildren = {
   CoursesRoute: CoursesRoute,
   DonateRoute: DonateRoute,
   ExamsRoute: ExamsRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   NotesRoute: NotesRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   TournamentsRoute: TournamentsRouteWithChildren,
   TakeExamIdRoute: TakeExamIdRoute,
 }

@@ -1,13 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { BookOpen, Loader2, Search, Filter } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { BookOpen, Loader2, Search, Filter, Star } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { listCoursesPublic } from "@/lib/courses.functions";
+import { listMyBookmarkIds, toggleBookmark } from "@/lib/account.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/courses")({
   head: () => ({
@@ -21,10 +24,38 @@ export const Route = createFileRoute("/courses")({
 
 function CoursesPage() {
   const fn = useServerFn(listCoursesPublic);
+  const bookmarksFn = useServerFn(listMyBookmarkIds);
+  const toggleFn = useServerFn(toggleBookmark);
+  const qc = useQueryClient();
   const [filters, setFilters] = useState({ q: "", school: "", department: "", level: "" });
+  const [signedIn, setSignedIn] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSignedIn(!!s));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
   const { data, isLoading } = useQuery({
     queryKey: ["courses-public", filters],
     queryFn: () => fn({ data: filters }),
+  });
+
+  const { data: bookmarkIds } = useQuery({
+    queryKey: ["my-bookmark-ids"],
+    queryFn: () => bookmarksFn(),
+    enabled: signedIn,
+  });
+  const bookmarked = new Set(bookmarkIds ?? []);
+
+  const toggleMut = useMutation({
+    mutationFn: (courseId: string) => toggleFn({ data: { courseId } }),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ["my-bookmark-ids"] });
+      qc.invalidateQueries({ queryKey: ["my-bookmarks"] });
+      toast.success(res.bookmarked ? "Saved" : "Removed from saved");
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   return (
@@ -55,33 +86,47 @@ function CoursesPage() {
             </div>
           ) : (
             <div className="grid gap-3 md:grid-cols-2">
-              {data!.map((c) => (
-                <div key={c.id} className="rounded-xl border border-border bg-card p-5 hover:border-primary/50 transition">
-                  <div className="flex items-start gap-3">
-                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
-                      <BookOpen className="h-5 w-5" />
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-mono text-xs text-muted-foreground">{c.code}</div>
-                      <h3 className="font-semibold">{c.title}</h3>
-                      {c.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{c.description}</p>}
-                      <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
-                        {c.school && <Tag>{c.school}</Tag>}
-                        {c.department && <Tag>{c.department}</Tag>}
-                        {c.level && <Tag>Level {c.level}</Tag>}
-                        <Tag>{c.questionCount} questions</Tag>
+              {data!.map((c) => {
+                const isSaved = bookmarked.has(c.id);
+                return (
+                  <div key={c.id} className="rounded-xl border border-border bg-card p-5 hover:border-primary/50 transition">
+                    <div className="flex items-start gap-3">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
+                        <BookOpen className="h-5 w-5" />
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-mono text-xs text-muted-foreground">{c.code}</div>
+                        <h3 className="font-semibold">{c.title}</h3>
+                        {c.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{c.description}</p>}
+                        <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
+                          {c.school && <Tag>{c.school}</Tag>}
+                          {c.department && <Tag>{c.department}</Tag>}
+                          {c.level && <Tag>Level {c.level}</Tag>}
+                          <Tag>{c.questionCount} questions</Tag>
+                        </div>
                       </div>
+                      {signedIn && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={isSaved ? "Remove from saved" : "Save course"}
+                          onClick={() => toggleMut.mutate(c.id)}
+                          disabled={toggleMut.isPending}
+                        >
+                          <Star className={`h-5 w-5 ${isSaved ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="mt-4 flex justify-end">
+                      <Link to="/practice/$courseId" params={{ courseId: c.id }}>
+                        <Button size="sm" disabled={c.questionCount === 0}>
+                          {c.questionCount === 0 ? "No questions yet" : "Start practice"}
+                        </Button>
+                      </Link>
                     </div>
                   </div>
-                  <div className="mt-4 flex justify-end">
-                    <Link to="/practice/$courseId" params={{ courseId: c.id }}>
-                      <Button size="sm" disabled={c.questionCount === 0}>
-                        {c.questionCount === 0 ? "No questions yet" : "Start practice"}
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

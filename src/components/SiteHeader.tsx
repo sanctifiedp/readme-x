@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BookOpen, Moon, Sun, LogOut, Heart, MessageCircle, Menu, X, MessageSquareText } from "lucide-react";
+import { BookOpen, Moon, Sun, LogOut, Heart, MessageCircle, Menu, X, MessageSquareText, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { initTheme, toggleTheme, isDark } from "@/lib/theme";
@@ -50,6 +50,9 @@ export function SiteHeader() {
             <>
               <Link to="/dashboard" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Dashboard</Link>
               <Link to="/chat" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Chat</Link>
+              <Link to="/profile" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+                <UserCircle className="h-4 w-4" /> Profile
+              </Link>
             </>
           )}
         </nav>
@@ -103,6 +106,7 @@ export function SiteHeader() {
             <>
               <Link to="/dashboard" onClick={() => setOpen(false)} className="py-2 text-sm">Dashboard</Link>
               <Link to="/chat" onClick={() => setOpen(false)} className="py-2 text-sm">Chat</Link>
+              <Link to="/profile" onClick={() => setOpen(false)} className="py-2 text-sm">Profile</Link>
             </>
           )}
           <a href={FEEDBACK_URL} target="_blank" rel="noreferrer" className="py-2 text-sm">Give feedback</a>
