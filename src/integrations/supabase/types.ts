@@ -53,6 +53,95 @@ export type Database = {
           },
         ]
       }
+      challenge_attempts: {
+        Row: {
+          answers: Json | null
+          challenge_id: string
+          expires_at: string
+          id: string
+          score: number | null
+          started_at: string
+          submitted_at: string | null
+          user_id: string
+          wrong: number | null
+        }
+        Insert: {
+          answers?: Json | null
+          challenge_id: string
+          expires_at: string
+          id?: string
+          score?: number | null
+          started_at?: string
+          submitted_at?: string | null
+          user_id: string
+          wrong?: number | null
+        }
+        Update: {
+          answers?: Json | null
+          challenge_id?: string
+          expires_at?: string
+          id?: string
+          score?: number | null
+          started_at?: string
+          submitted_at?: string | null
+          user_id?: string
+          wrong?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_attempts_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenges: {
+        Row: {
+          accepted_at: string | null
+          challenger_id: string
+          completed_at: string | null
+          course_id: string
+          created_at: string
+          duration_seconds: number
+          id: string
+          opponent_id: string
+          question_count: number
+          question_ids: Json
+          status: string
+          winner_user_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          challenger_id: string
+          completed_at?: string | null
+          course_id: string
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          opponent_id: string
+          question_count?: number
+          question_ids: Json
+          status?: string
+          winner_user_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          challenger_id?: string
+          completed_at?: string | null
+          course_id?: string
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          opponent_id?: string
+          question_count?: number
+          question_ids?: Json
+          status?: string
+          winner_user_id?: string | null
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           body: string
@@ -209,6 +298,35 @@ export type Database = {
         }
         Relationships: []
       }
+      departments: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          school_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          school_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          school_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       donations: {
         Row: {
           amount: number
@@ -348,6 +466,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      friendships: {
+        Row: {
+          accepted_at: string | null
+          addressee_id: string
+          created_at: string
+          id: string
+          requester_id: string
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          addressee_id: string
+          created_at?: string
+          id?: string
+          requester_id: string
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          addressee_id?: string
+          created_at?: string
+          id?: string
+          requester_id?: string
+          status?: string
+        }
+        Relationships: []
       }
       notes: {
         Row: {
@@ -497,6 +642,24 @@ export type Database = {
           author?: string
           id?: string
           text?: string
+        }
+        Relationships: []
+      }
+      schools: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
         }
         Relationships: []
       }
