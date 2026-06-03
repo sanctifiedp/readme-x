@@ -21,6 +21,10 @@ import { createCourseFull, deleteCourse } from "@/lib/courses.functions";
 import { listPendingDonations, decideDonation } from "@/lib/donations.functions";
 import { listNotes, createNote, deleteNote } from "@/lib/notes.functions";
 import { listRooms, createRoom, updateRoom, deleteRoom } from "@/lib/chat.functions";
+import {
+  listSchools, listDepartments, createSchool, updateSchool, deleteSchool,
+  createDepartment, updateDepartment, deleteDepartment,
+} from "@/lib/lookups.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/admin")({
