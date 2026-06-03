@@ -67,6 +67,7 @@ function AdminPage() {
             <TabsTrigger value="ai">AI generation</TabsTrigger>
             <TabsTrigger value="notes">Notes</TabsTrigger>
             <TabsTrigger value="chat">Chat rooms</TabsTrigger>
+            <TabsTrigger value="lookups">Schools & Departments</TabsTrigger>
             <TabsTrigger value="donations">Donations</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="settings">AI settings</TabsTrigger>
@@ -76,6 +77,7 @@ function AdminPage() {
           <TabsContent value="ai" className="mt-4"><CoursesTab courses={data?.courses ?? []} /></TabsContent>
           <TabsContent value="notes" className="mt-4"><NotesTab /></TabsContent>
           <TabsContent value="chat" className="mt-4"><ChatRoomsTab /></TabsContent>
+          <TabsContent value="lookups" className="mt-4"><LookupsTab /></TabsContent>
           <TabsContent value="donations" className="mt-4"><DonationsTab /></TabsContent>
           <TabsContent value="users" className="mt-4"><UsersTab /></TabsContent>
           <TabsContent value="settings" className="mt-4"><AISettingsTab /></TabsContent>
