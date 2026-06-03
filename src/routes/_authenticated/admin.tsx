@@ -143,9 +143,9 @@ function CourseBanksTab({ courses }: { courses: AdminCourse[] }) {
                   <div className="mt-2 text-xs text-muted-foreground">{c.questionCount} / 500 questions</div>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Link to="/admin/course/$courseId" params={{ courseId: c.id }}>
-                    <Button size="sm" variant="outline">Edit questions</Button>
-                  </Link>
+                  <Button size="sm" variant="outline" asChild>
+                    <Link to="/admin/course/$courseId" params={{ courseId: c.id }}>Edit questions</Link>
+                  </Button>
                   <Button size="sm" variant="ghost" onClick={() => { if (confirm("Delete this course and all its questions?")) delMut.mutate(c.id); }}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
