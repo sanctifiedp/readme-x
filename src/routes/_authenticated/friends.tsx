@@ -117,9 +117,9 @@ function FriendRow({ f, kind }: { f: FriendItem; kind: "accepted" | "incoming" |
       <div className="flex items-center gap-2 shrink-0">
         {kind === "accepted" && (
           <>
-            <Link to="/challenges" search={{ opponentId: f.otherUser.id }}>
-              <Button size="sm" variant="outline"><Swords className="h-3.5 w-3.5 mr-1" />Challenge</Button>
-            </Link>
+            <Button size="sm" variant="outline" asChild>
+              <Link to="/challenges" search={{ opponentId: f.otherUser.id }}><Swords className="h-3.5 w-3.5 mr-1" />Challenge</Link>
+            </Button>
             <Button size="sm" variant="ghost" onClick={() => remove.mutate()} disabled={remove.isPending}>
               <UserMinus className="h-3.5 w-3.5" />
             </Button>
