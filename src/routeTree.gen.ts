@@ -25,12 +25,14 @@ import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedFriendsRouteImport } from './routes/_authenticated/friends'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
+import { Route as AuthenticatedChallengesRouteImport } from './routes/_authenticated/challenges'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedTournamentAttemptIdRouteImport } from './routes/_authenticated/tournament.$attemptId'
 import { Route as AuthenticatedResultsAttemptIdRouteImport } from './routes/_authenticated/results.$attemptId'
 import { Route as AuthenticatedPracticeCourseIdRouteImport } from './routes/_authenticated/practice.$courseId'
 import { Route as AuthenticatedExamAttemptIdRouteImport } from './routes/_authenticated/exam.$attemptId'
 import { Route as AuthenticatedCoursesCodeRouteImport } from './routes/_authenticated/courses.$code'
+import { Route as AuthenticatedChallengeChallengeIdRouteImport } from './routes/_authenticated/challenge.$challengeId'
 import { Route as AuthenticatedAdminCourseCourseIdRouteImport } from './routes/_authenticated/admin.course.$courseId'
 
 const TournamentsRoute = TournamentsRouteImport.update({
@@ -112,6 +114,11 @@ const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
   path: '/chat',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedChallengesRoute = AuthenticatedChallengesRouteImport.update({
+  id: '/challenges',
+  path: '/challenges',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -147,6 +154,12 @@ const AuthenticatedCoursesCodeRoute =
     path: '/courses/$code',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedChallengeChallengeIdRoute =
+  AuthenticatedChallengeChallengeIdRouteImport.update({
+    id: '/challenge/$challengeId',
+    path: '/challenge/$challengeId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAdminCourseCourseIdRoute =
   AuthenticatedAdminCourseCourseIdRouteImport.update({
     id: '/course/$courseId',
@@ -165,12 +178,14 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/tournaments': typeof TournamentsRouteWithChildren
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/challenges': typeof AuthenticatedChallengesRoute
   '/chat': typeof AuthenticatedChatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/friends': typeof AuthenticatedFriendsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/take/$examId': typeof TakeExamIdRoute
   '/tournaments/$id': typeof TournamentsIdRoute
+  '/challenge/$challengeId': typeof AuthenticatedChallengeChallengeIdRoute
   '/courses/$code': typeof AuthenticatedCoursesCodeRoute
   '/exam/$attemptId': typeof AuthenticatedExamAttemptIdRoute
   '/practice/$courseId': typeof AuthenticatedPracticeCourseIdRoute
@@ -189,12 +204,14 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/tournaments': typeof TournamentsRouteWithChildren
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/challenges': typeof AuthenticatedChallengesRoute
   '/chat': typeof AuthenticatedChatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/friends': typeof AuthenticatedFriendsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/take/$examId': typeof TakeExamIdRoute
   '/tournaments/$id': typeof TournamentsIdRoute
+  '/challenge/$challengeId': typeof AuthenticatedChallengeChallengeIdRoute
   '/courses/$code': typeof AuthenticatedCoursesCodeRoute
   '/exam/$attemptId': typeof AuthenticatedExamAttemptIdRoute
   '/practice/$courseId': typeof AuthenticatedPracticeCourseIdRoute
@@ -215,12 +232,14 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/tournaments': typeof TournamentsRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/challenges': typeof AuthenticatedChallengesRoute
   '/_authenticated/chat': typeof AuthenticatedChatRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/friends': typeof AuthenticatedFriendsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/take/$examId': typeof TakeExamIdRoute
   '/tournaments/$id': typeof TournamentsIdRoute
+  '/_authenticated/challenge/$challengeId': typeof AuthenticatedChallengeChallengeIdRoute
   '/_authenticated/courses/$code': typeof AuthenticatedCoursesCodeRoute
   '/_authenticated/exam/$attemptId': typeof AuthenticatedExamAttemptIdRoute
   '/_authenticated/practice/$courseId': typeof AuthenticatedPracticeCourseIdRoute
@@ -241,12 +260,14 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/tournaments'
     | '/admin'
+    | '/challenges'
     | '/chat'
     | '/dashboard'
     | '/friends'
     | '/profile'
     | '/take/$examId'
     | '/tournaments/$id'
+    | '/challenge/$challengeId'
     | '/courses/$code'
     | '/exam/$attemptId'
     | '/practice/$courseId'
@@ -265,12 +286,14 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/tournaments'
     | '/admin'
+    | '/challenges'
     | '/chat'
     | '/dashboard'
     | '/friends'
     | '/profile'
     | '/take/$examId'
     | '/tournaments/$id'
+    | '/challenge/$challengeId'
     | '/courses/$code'
     | '/exam/$attemptId'
     | '/practice/$courseId'
@@ -290,12 +313,14 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/tournaments'
     | '/_authenticated/admin'
+    | '/_authenticated/challenges'
     | '/_authenticated/chat'
     | '/_authenticated/dashboard'
     | '/_authenticated/friends'
     | '/_authenticated/profile'
     | '/take/$examId'
     | '/tournaments/$id'
+    | '/_authenticated/challenge/$challengeId'
     | '/_authenticated/courses/$code'
     | '/_authenticated/exam/$attemptId'
     | '/_authenticated/practice/$courseId'
@@ -432,6 +457,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/challenges': {
+      id: '/_authenticated/challenges'
+      path: '/challenges'
+      fullPath: '/challenges'
+      preLoaderRoute: typeof AuthenticatedChallengesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -474,6 +506,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCoursesCodeRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/challenge/$challengeId': {
+      id: '/_authenticated/challenge/$challengeId'
+      path: '/challenge/$challengeId'
+      fullPath: '/challenge/$challengeId'
+      preLoaderRoute: typeof AuthenticatedChallengeChallengeIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admin/course/$courseId': {
       id: '/_authenticated/admin/course/$courseId'
       path: '/course/$courseId'
@@ -497,10 +536,12 @@ const AuthenticatedAdminRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+  AuthenticatedChallengesRoute: typeof AuthenticatedChallengesRoute
   AuthenticatedChatRoute: typeof AuthenticatedChatRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFriendsRoute: typeof AuthenticatedFriendsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedChallengeChallengeIdRoute: typeof AuthenticatedChallengeChallengeIdRoute
   AuthenticatedCoursesCodeRoute: typeof AuthenticatedCoursesCodeRoute
   AuthenticatedExamAttemptIdRoute: typeof AuthenticatedExamAttemptIdRoute
   AuthenticatedPracticeCourseIdRoute: typeof AuthenticatedPracticeCourseIdRoute
@@ -510,10 +551,13 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+  AuthenticatedChallengesRoute: AuthenticatedChallengesRoute,
   AuthenticatedChatRoute: AuthenticatedChatRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFriendsRoute: AuthenticatedFriendsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedChallengeChallengeIdRoute:
+    AuthenticatedChallengeChallengeIdRoute,
   AuthenticatedCoursesCodeRoute: AuthenticatedCoursesCodeRoute,
   AuthenticatedExamAttemptIdRoute: AuthenticatedExamAttemptIdRoute,
   AuthenticatedPracticeCourseIdRoute: AuthenticatedPracticeCourseIdRoute,
@@ -553,3 +597,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
