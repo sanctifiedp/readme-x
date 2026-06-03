@@ -49,6 +49,8 @@ export function SiteHeader() {
           {user && (
             <>
               <Link to="/dashboard" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Dashboard</Link>
+              <Link to="/friends" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Friends</Link>
+              <Link to="/challenges" search={{}} className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Challenges</Link>
               <Link to="/chat" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Chat</Link>
               <Link to="/profile" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
                 <UserCircle className="h-4 w-4" /> Profile
@@ -105,6 +107,8 @@ export function SiteHeader() {
           {user && (
             <>
               <Link to="/dashboard" onClick={() => setOpen(false)} className="py-2 text-sm">Dashboard</Link>
+              <Link to="/friends" onClick={() => setOpen(false)} className="py-2 text-sm">Friends</Link>
+              <Link to="/challenges" search={{}} onClick={() => setOpen(false)} className="py-2 text-sm">Challenges</Link>
               <Link to="/chat" onClick={() => setOpen(false)} className="py-2 text-sm">Chat</Link>
               <Link to="/profile" onClick={() => setOpen(false)} className="py-2 text-sm">Profile</Link>
             </>

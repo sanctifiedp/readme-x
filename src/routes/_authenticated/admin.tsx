@@ -21,6 +21,10 @@ import { createCourseFull, deleteCourse } from "@/lib/courses.functions";
 import { listPendingDonations, decideDonation } from "@/lib/donations.functions";
 import { listNotes, createNote, deleteNote } from "@/lib/notes.functions";
 import { listRooms, createRoom, updateRoom, deleteRoom } from "@/lib/chat.functions";
+import {
+  listSchools, listDepartments, createSchool, updateSchool, deleteSchool,
+  createDepartment, updateDepartment, deleteDepartment,
+} from "@/lib/lookups.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -63,6 +67,7 @@ function AdminPage() {
             <TabsTrigger value="ai">AI generation</TabsTrigger>
             <TabsTrigger value="notes">Notes</TabsTrigger>
             <TabsTrigger value="chat">Chat rooms</TabsTrigger>
+            <TabsTrigger value="lookups">Schools & Departments</TabsTrigger>
             <TabsTrigger value="donations">Donations</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="settings">AI settings</TabsTrigger>
@@ -72,6 +77,7 @@ function AdminPage() {
           <TabsContent value="ai" className="mt-4"><CoursesTab courses={data?.courses ?? []} /></TabsContent>
           <TabsContent value="notes" className="mt-4"><NotesTab /></TabsContent>
           <TabsContent value="chat" className="mt-4"><ChatRoomsTab /></TabsContent>
+          <TabsContent value="lookups" className="mt-4"><LookupsTab /></TabsContent>
           <TabsContent value="donations" className="mt-4"><DonationsTab /></TabsContent>
           <TabsContent value="users" className="mt-4"><UsersTab /></TabsContent>
           <TabsContent value="settings" className="mt-4"><AISettingsTab /></TabsContent>
@@ -143,9 +149,9 @@ function CourseBanksTab({ courses }: { courses: AdminCourse[] }) {
                   <div className="mt-2 text-xs text-muted-foreground">{c.questionCount} / 500 questions</div>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Link to="/admin/course/$courseId" params={{ courseId: c.id }}>
-                    <Button size="sm" variant="outline">Edit questions</Button>
-                  </Link>
+                  <Button size="sm" variant="outline" asChild>
+                    <Link to="/admin/course/$courseId" params={{ courseId: c.id }}>Edit questions</Link>
+                  </Button>
                   <Button size="sm" variant="ghost" onClick={() => { if (confirm("Delete this course and all its questions?")) delMut.mutate(c.id); }}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -674,4 +680,130 @@ function Field({ label, name, ...props }: { label: string; name: string } & Reac
 
 function Empty({ children }: { children: React.ReactNode }) {
   return <div className="rounded-xl border border-dashed border-border p-8 text-center text-muted-foreground">{children}</div>;
+}
+
+/* ─── Schools & Departments tab ───────────────────────── */
+
+function LookupsTab() {
+  const qc = useQueryClient();
+  const listSch = useServerFn(listSchools);
+  const listDep = useServerFn(listDepartments);
+  const createSch = useServerFn(createSchool);
+  const updateSch = useServerFn(updateSchool);
+  const deleteSch = useServerFn(deleteSchool);
+  const createDep = useServerFn(createDepartment);
+  const updateDep = useServerFn(updateDepartment);
+  const deleteDep = useServerFn(deleteDepartment);
+
+  const { data: schoolsData } = useQuery({ queryKey: ["schools"], queryFn: () => listSch() });
+  const { data: depsData } = useQuery({ queryKey: ["departments"], queryFn: () => listDep({ data: {} }) });
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["schools"] });
+    qc.invalidateQueries({ queryKey: ["departments"] });
+  };
+
+  const [newSchool, setNewSchool] = useState("");
+  const [selectedSchool, setSelectedSchool] = useState<string>("");
+  const [newDept, setNewDept] = useState("");
+
+  const addSch = useMutation({
+    mutationFn: (name: string) => createSch({ data: { name } }),
+    onSuccess: () => { toast.success("School added"); setNewSchool(""); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const renameSch = useMutation({
+    mutationFn: (v: { id: string; name: string }) => updateSch({ data: v }),
+    onSuccess: () => { toast.success("Renamed"); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const delSch = useMutation({
+    mutationFn: (id: string) => deleteSch({ data: { id } }),
+    onSuccess: () => { toast.success("Deleted"); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const addDep = useMutation({
+    mutationFn: (v: { schoolId: string; name: string }) => createDep({ data: v }),
+    onSuccess: () => { toast.success("Department added"); setNewDept(""); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const renameDep = useMutation({
+    mutationFn: (v: { id: string; name: string }) => updateDep({ data: v }),
+    onSuccess: () => { toast.success("Renamed"); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const delDep = useMutation({
+    mutationFn: (id: string) => deleteDep({ data: { id } }),
+    onSuccess: () => { toast.success("Deleted"); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const schools = schoolsData?.schools ?? [];
+  const departments = depsData?.departments ?? [];
+
+  return (
+    <div className="grid md:grid-cols-2 gap-6">
+      <div className="space-y-3">
+        <h2 className="font-semibold">Schools</h2>
+        <form
+          onSubmit={(e) => { e.preventDefault(); if (newSchool.trim()) addSch.mutate(newSchool.trim()); }}
+          className="flex gap-2"
+        >
+          <Input value={newSchool} onChange={(e) => setNewSchool(e.target.value)} placeholder="School name" />
+          <Button type="submit" disabled={addSch.isPending || !newSchool.trim()}>Add</Button>
+        </form>
+        <div className="space-y-1.5">
+          {schools.length === 0 && <Empty>No schools yet.</Empty>}
+          {schools.map((s) => (
+            <div key={s.id} className={`flex items-center gap-2 rounded-md border p-2 ${selectedSchool === s.id ? "border-primary" : "border-border"}`}>
+              <button onClick={() => setSelectedSchool(s.id)} className="flex-1 text-left text-sm">{s.name}</button>
+              <Button size="sm" variant="ghost" onClick={() => {
+                const v = prompt("Rename school", s.name);
+                if (v && v.trim() && v !== s.name) renameSch.mutate({ id: s.id, name: v.trim() });
+              }}>Edit</Button>
+              <Button size="sm" variant="ghost" onClick={() => { if (confirm("Delete school?")) delSch.mutate(s.id); }}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <h2 className="font-semibold">
+          Departments {selectedSchool ? `· ${schools.find((s) => s.id === selectedSchool)?.name}` : ""}
+        </h2>
+        {!selectedSchool ? (
+          <Empty>Select a school on the left to manage its departments.</Empty>
+        ) : (
+          <>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (newDept.trim()) addDep.mutate({ schoolId: selectedSchool, name: newDept.trim() });
+              }}
+              className="flex gap-2"
+            >
+              <Input value={newDept} onChange={(e) => setNewDept(e.target.value)} placeholder="Department name" />
+              <Button type="submit" disabled={addDep.isPending || !newDept.trim()}>Add</Button>
+            </form>
+            <div className="space-y-1.5">
+              {departments.filter((d) => d.school_id === selectedSchool).length === 0 && <Empty>No departments yet.</Empty>}
+              {departments.filter((d) => d.school_id === selectedSchool).map((d) => (
+                <div key={d.id} className="flex items-center gap-2 rounded-md border border-border p-2">
+                  <span className="flex-1 text-sm">{d.name}</span>
+                  <Button size="sm" variant="ghost" onClick={() => {
+                    const v = prompt("Rename department", d.name);
+                    if (v && v.trim() && v !== d.name) renameDep.mutate({ id: d.id, name: v.trim() });
+                  }}>Edit</Button>
+                  <Button size="sm" variant="ghost" onClick={() => { if (confirm("Delete department?")) delDep.mutate(d.id); }}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
