@@ -22,6 +22,8 @@ function AuthPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<"signin" | "signup">("signin");
+  const [suSchool, setSuSchool] = useState("");
+  const [suDept, setSuDept] = useState("");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
