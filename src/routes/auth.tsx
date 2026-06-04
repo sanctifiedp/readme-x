@@ -134,18 +134,17 @@ function AuthPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="su-school">School</Label>
-                    <Input id="su-school" name="school" placeholder="e.g. University of Lagos" />
-                  </div>
-                  <div className="space-y-1.5">
                     <Label htmlFor="su-level">Level</Label>
                     <Input id="su-level" name="level" placeholder="100" />
                   </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="su-dept">Department</Label>
-                  <Input id="su-dept" name="department" placeholder="e.g. Computer Science" />
-                </div>
+                <SchoolDepartmentPicker
+                  schoolValue={suSchool}
+                  departmentValue={suDept}
+                  onSchoolChange={setSuSchool}
+                  onDepartmentChange={setSuDept}
+                />
+
                 <div className="space-y-1.5">
                   <Label htmlFor="su-email">Email</Label>
                   <Input id="su-email" name="email" type="email" required autoComplete="email" />
