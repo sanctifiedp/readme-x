@@ -285,11 +285,20 @@ function CoursesTab({ courses }: { courses: AdminCourse[] }) {
                   {c.description && <p className="text-sm text-muted-foreground mt-1">{c.description}</p>}
                   <div className="mt-2 text-xs text-muted-foreground">{c.questionCount} questions · {c.materials.length} materials</div>
                 </div>
-                <UploadMaterialDialog
-                  courseId={c.id} courseCode={c.code}
-                  onSubmit={(d) => uploadMut.mutate(d)}
-                  pending={uploadMut.isPending || genMut.isPending}
-                />
+                <div className="flex flex-col gap-2">
+                  <Link
+                    to="/admin/course/$courseId"
+                    params={{ courseId: c.id }}
+                    className="inline-flex items-center justify-center h-9 px-3 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                  >
+                    Edit questions
+                  </Link>
+                  <UploadMaterialDialog
+                    courseId={c.id} courseCode={c.code}
+                    onSubmit={(d) => uploadMut.mutate(d)}
+                    pending={uploadMut.isPending || genMut.isPending}
+                  />
+                </div>
               </div>
             </div>
           ))}
