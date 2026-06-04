@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyProfile, updateMyProfile, deleteMyAccount, listMyBookmarks } from "@/lib/account.functions";
+import { SchoolDepartmentPicker } from "@/components/SchoolDepartmentPicker";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
