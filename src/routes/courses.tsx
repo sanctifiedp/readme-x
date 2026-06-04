@@ -71,10 +71,19 @@ function CoursesPage() {
             <Input className="pl-9" placeholder="Search code or title…" value={filters.q}
               onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))} />
           </div>
-          <Input placeholder="School" value={filters.school} onChange={(e) => setFilters((f) => ({ ...f, school: e.target.value }))} />
-          <Input placeholder="Department" value={filters.department} onChange={(e) => setFilters((f) => ({ ...f, department: e.target.value }))} />
+          <div className="md:col-span-2 grid grid-cols-2 gap-3">
+            <SchoolDepartmentPicker
+              schoolValue={filters.school}
+              departmentValue={filters.department}
+              onSchoolChange={(v) => setFilters((f) => ({ ...f, school: v }))}
+              onDepartmentChange={(v) => setFilters((f) => ({ ...f, department: v }))}
+              includeEmpty={{ label: "Any" }}
+              layout="grid"
+            />
+          </div>
           <Input placeholder="Level (100, 200…)" value={filters.level} onChange={(e) => setFilters((f) => ({ ...f, level: e.target.value }))} />
         </div>
+
 
         <div className="mt-6">
           {isLoading ? (
