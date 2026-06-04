@@ -11,6 +11,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { listCoursesPublic } from "@/lib/courses.functions";
 import { listMyBookmarkIds, toggleBookmark } from "@/lib/account.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { SchoolDepartmentPicker } from "@/components/SchoolDepartmentPicker";
 
 export const Route = createFileRoute("/courses")({
   head: () => ({
