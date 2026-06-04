@@ -26,6 +26,7 @@ import {
   createDepartment, updateDepartment, deleteDepartment,
 } from "@/lib/lookups.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { SchoolDepartmentPicker } from "@/components/SchoolDepartmentPicker";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin — ReadMe" }] }),
