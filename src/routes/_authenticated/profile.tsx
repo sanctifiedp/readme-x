@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyProfile, updateMyProfile, deleteMyAccount, listMyBookmarks } from "@/lib/account.functions";
+import { SchoolDepartmentPicker } from "@/components/SchoolDepartmentPicker";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
@@ -149,16 +150,13 @@ function ProfilePage() {
                     onChange={(e) => setForm((f) => ({ ...f, level: e.target.value }))} />
                 </div>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="school">School</Label>
-                <Input id="school" value={form.school}
-                  onChange={(e) => setForm((f) => ({ ...f, school: e.target.value }))} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="department">Department</Label>
-                <Input id="department" value={form.department}
-                  onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))} />
-              </div>
+              <SchoolDepartmentPicker
+                schoolValue={form.school}
+                departmentValue={form.department}
+                onSchoolChange={(v) => setForm((f) => ({ ...f, school: v }))}
+                onDepartmentChange={(v) => setForm((f) => ({ ...f, department: v }))}
+              />
+
               <Button type="submit" disabled={saveMut.isPending}>
                 {saveMut.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Save changes
               </Button>

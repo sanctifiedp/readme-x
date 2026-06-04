@@ -26,6 +26,7 @@ import {
   createDepartment, updateDepartment, deleteDepartment,
 } from "@/lib/lookups.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { SchoolDepartmentPicker } from "@/components/SchoolDepartmentPicker";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin — ReadMe" }] }),
@@ -149,9 +150,13 @@ function CourseBanksTab({ courses }: { courses: AdminCourse[] }) {
                   <div className="mt-2 text-xs text-muted-foreground">{c.questionCount} / 500 questions</div>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Button size="sm" variant="outline" asChild>
-                    <Link to="/admin/course/$courseId" params={{ courseId: c.id }}>Edit questions</Link>
-                  </Button>
+                  <Link
+                    to="/admin/course/$courseId"
+                    params={{ courseId: c.id }}
+                    className="inline-flex items-center justify-center h-9 px-3 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                  >
+                    Edit questions
+                  </Link>
                   <Button size="sm" variant="ghost" onClick={() => { if (confirm("Delete this course and all its questions?")) delMut.mutate(c.id); }}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -167,8 +172,10 @@ function CourseBanksTab({ courses }: { courses: AdminCourse[] }) {
 
 function CreateCourseFullDialog({ onSubmit, pending }: { onSubmit: (d: { code: string; title: string; description?: string; school?: string; department?: string; level?: string }) => void; pending: boolean }) {
   const [open, setOpen] = useState(false);
+  const [school, setSchool] = useState("");
+  const [department, setDepartment] = useState("");
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setSchool(""); setDepartment(""); } }}>
       <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-1" /> New course</Button></DialogTrigger>
       <DialogContent>
         <DialogHeader><DialogTitle>Create course</DialogTitle></DialogHeader>
@@ -180,8 +187,8 @@ function CreateCourseFullDialog({ onSubmit, pending }: { onSubmit: (d: { code: s
               code: String(fd.get("code")),
               title: String(fd.get("title")),
               description: String(fd.get("description") ?? "") || undefined,
-              school: String(fd.get("school") ?? "") || undefined,
-              department: String(fd.get("department") ?? "") || undefined,
+              school: school || undefined,
+              department: department || undefined,
               level: String(fd.get("level") ?? "") || undefined,
             });
             setOpen(false);
@@ -191,11 +198,14 @@ function CreateCourseFullDialog({ onSubmit, pending }: { onSubmit: (d: { code: s
           <Field label="Course code" name="code" placeholder="CSC101" required />
           <Field label="Title" name="title" required />
           <div className="space-y-1.5"><Label htmlFor="d2">Description</Label><Textarea id="d2" name="description" rows={2} /></div>
-          <div className="grid grid-cols-3 gap-2">
-            <Field label="School" name="school" />
-            <Field label="Department" name="department" />
-            <Field label="Level" name="level" />
-          </div>
+          <SchoolDepartmentPicker
+            schoolValue={school}
+            departmentValue={department}
+            onSchoolChange={setSchool}
+            onDepartmentChange={setDepartment}
+            layout="grid"
+          />
+          <Field label="Level" name="level" placeholder="100" />
           <DialogFooter><Button type="submit" disabled={pending}>{pending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Create</Button></DialogFooter>
         </form>
       </DialogContent>
