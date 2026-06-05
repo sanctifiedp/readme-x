@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { sanitizePostgrestTerm } from "./search-sanitize";
 
 const MAX_PER_COURSE = 500;
 
@@ -29,7 +30,10 @@ export const listCoursesPublic = createServerFn({ method: "POST" })
     if (data.school) q = q.ilike("school", `%${data.school}%`);
     if (data.department) q = q.ilike("department", `%${data.department}%`);
     if (data.level) q = q.ilike("level", `%${data.level}%`);
-    if (data.q) q = q.or(`title.ilike.%${data.q}%,code.ilike.%${data.q}%,description.ilike.%${data.q}%`);
+    if (data.q) {
+      const s = sanitizePostgrestTerm(data.q);
+      if (s) q = q.or(`title.ilike.%${s}%,code.ilike.%${s}%,description.ilike.%${s}%`);
+    }
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
     return (rows ?? []).map((c) => ({
