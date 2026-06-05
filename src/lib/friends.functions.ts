@@ -2,13 +2,16 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { sanitizePostgrestTerm } from "./search-sanitize";
 
 export const searchUsers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ q: z.string().trim().min(1).max(120) }).parse(input))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const term = `%${data.q}%`;
+    const safe = sanitizePostgrestTerm(data.q);
+    if (!safe) return { users: [] };
+    const term = `%${safe}%`;
     const { data: rows, error } = await supabaseAdmin
       .from("profiles")
       .select("id, full_name, email, matric_no, school, department, level")

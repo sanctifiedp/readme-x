@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { sanitizePostgrestTerm } from "./search-sanitize";
 
 async function assertAdmin(userId: string) {
   const { data } = await supabaseAdmin
@@ -23,7 +24,10 @@ export const listNotes = createServerFn({ method: "POST" })
     if (data.school) q = q.ilike("school", `%${data.school}%`);
     if (data.department) q = q.ilike("department", `%${data.department}%`);
     if (data.level) q = q.ilike("level", `%${data.level}%`);
-    if (data.q) q = q.or(`title.ilike.%${data.q}%,description.ilike.%${data.q}%,course_code.ilike.%${data.q}%`);
+    if (data.q) {
+      const s = sanitizePostgrestTerm(data.q);
+      if (s) q = q.or(`title.ilike.%${s}%,description.ilike.%${s}%,course_code.ilike.%${s}%`);
+    }
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
 
