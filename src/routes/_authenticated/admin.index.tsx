@@ -28,7 +28,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { SchoolDepartmentPicker } from "@/components/SchoolDepartmentPicker";
 
-export const Route = createFileRoute("/_authenticated/admin")({
+export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({ meta: [{ title: "Admin — ReadMe" }] }),
   component: AdminPage,
 });

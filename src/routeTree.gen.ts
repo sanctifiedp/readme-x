@@ -26,7 +26,7 @@ import { Route as AuthenticatedFriendsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as AuthenticatedChallengesRouteImport } from './routes/_authenticated/challenges'
-import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedTournamentAttemptIdRouteImport } from './routes/_authenticated/tournament.$attemptId'
 import { Route as AuthenticatedResultsAttemptIdRouteImport } from './routes/_authenticated/results.$attemptId'
 import { Route as AuthenticatedPracticeCourseIdRouteImport } from './routes/_authenticated/practice.$courseId'
@@ -119,9 +119,9 @@ const AuthenticatedChallengesRoute = AuthenticatedChallengesRouteImport.update({
   path: '/challenges',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedTournamentAttemptIdRoute =
@@ -162,9 +162,9 @@ const AuthenticatedChallengeChallengeIdRoute =
   } as any)
 const AuthenticatedAdminCourseCourseIdRoute =
   AuthenticatedAdminCourseCourseIdRouteImport.update({
-    id: '/course/$courseId',
-    path: '/course/$courseId',
-    getParentRoute: () => AuthenticatedAdminRoute,
+    id: '/admin/course/$courseId',
+    path: '/admin/course/$courseId',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -177,7 +177,6 @@ export interface FileRoutesByFullPath {
   '/notes': typeof NotesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/tournaments': typeof TournamentsRouteWithChildren
-  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/challenges': typeof AuthenticatedChallengesRoute
   '/chat': typeof AuthenticatedChatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -191,6 +190,7 @@ export interface FileRoutesByFullPath {
   '/practice/$courseId': typeof AuthenticatedPracticeCourseIdRoute
   '/results/$attemptId': typeof AuthenticatedResultsAttemptIdRoute
   '/tournament/$attemptId': typeof AuthenticatedTournamentAttemptIdRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/course/$courseId': typeof AuthenticatedAdminCourseCourseIdRoute
 }
 export interface FileRoutesByTo {
@@ -203,7 +203,6 @@ export interface FileRoutesByTo {
   '/notes': typeof NotesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/tournaments': typeof TournamentsRouteWithChildren
-  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/challenges': typeof AuthenticatedChallengesRoute
   '/chat': typeof AuthenticatedChatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -217,6 +216,7 @@ export interface FileRoutesByTo {
   '/practice/$courseId': typeof AuthenticatedPracticeCourseIdRoute
   '/results/$attemptId': typeof AuthenticatedResultsAttemptIdRoute
   '/tournament/$attemptId': typeof AuthenticatedTournamentAttemptIdRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/course/$courseId': typeof AuthenticatedAdminCourseCourseIdRoute
 }
 export interface FileRoutesById {
@@ -231,7 +231,6 @@ export interface FileRoutesById {
   '/notes': typeof NotesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/tournaments': typeof TournamentsRouteWithChildren
-  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/challenges': typeof AuthenticatedChallengesRoute
   '/_authenticated/chat': typeof AuthenticatedChatRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -245,6 +244,7 @@ export interface FileRoutesById {
   '/_authenticated/practice/$courseId': typeof AuthenticatedPracticeCourseIdRoute
   '/_authenticated/results/$attemptId': typeof AuthenticatedResultsAttemptIdRoute
   '/_authenticated/tournament/$attemptId': typeof AuthenticatedTournamentAttemptIdRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/course/$courseId': typeof AuthenticatedAdminCourseCourseIdRoute
 }
 export interface FileRouteTypes {
@@ -259,7 +259,6 @@ export interface FileRouteTypes {
     | '/notes'
     | '/reset-password'
     | '/tournaments'
-    | '/admin'
     | '/challenges'
     | '/chat'
     | '/dashboard'
@@ -273,6 +272,7 @@ export interface FileRouteTypes {
     | '/practice/$courseId'
     | '/results/$attemptId'
     | '/tournament/$attemptId'
+    | '/admin/'
     | '/admin/course/$courseId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -285,7 +285,6 @@ export interface FileRouteTypes {
     | '/notes'
     | '/reset-password'
     | '/tournaments'
-    | '/admin'
     | '/challenges'
     | '/chat'
     | '/dashboard'
@@ -299,6 +298,7 @@ export interface FileRouteTypes {
     | '/practice/$courseId'
     | '/results/$attemptId'
     | '/tournament/$attemptId'
+    | '/admin'
     | '/admin/course/$courseId'
   id:
     | '__root__'
@@ -312,7 +312,6 @@ export interface FileRouteTypes {
     | '/notes'
     | '/reset-password'
     | '/tournaments'
-    | '/_authenticated/admin'
     | '/_authenticated/challenges'
     | '/_authenticated/chat'
     | '/_authenticated/dashboard'
@@ -326,6 +325,7 @@ export interface FileRouteTypes {
     | '/_authenticated/practice/$courseId'
     | '/_authenticated/results/$attemptId'
     | '/_authenticated/tournament/$attemptId'
+    | '/_authenticated/admin/'
     | '/_authenticated/admin/course/$courseId'
   fileRoutesById: FileRoutesById
 }
@@ -464,11 +464,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChallengesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
       path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/tournament/$attemptId': {
@@ -515,27 +515,15 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/admin/course/$courseId': {
       id: '/_authenticated/admin/course/$courseId'
-      path: '/course/$courseId'
+      path: '/admin/course/$courseId'
       fullPath: '/admin/course/$courseId'
       preLoaderRoute: typeof AuthenticatedAdminCourseCourseIdRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      parentRoute: typeof AuthenticatedRoute
     }
   }
 }
 
-interface AuthenticatedAdminRouteChildren {
-  AuthenticatedAdminCourseCourseIdRoute: typeof AuthenticatedAdminCourseCourseIdRoute
-}
-
-const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
-  AuthenticatedAdminCourseCourseIdRoute: AuthenticatedAdminCourseCourseIdRoute,
-}
-
-const AuthenticatedAdminRouteWithChildren =
-  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
-
 interface AuthenticatedRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedChallengesRoute: typeof AuthenticatedChallengesRoute
   AuthenticatedChatRoute: typeof AuthenticatedChatRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -547,10 +535,11 @@ interface AuthenticatedRouteChildren {
   AuthenticatedPracticeCourseIdRoute: typeof AuthenticatedPracticeCourseIdRoute
   AuthenticatedResultsAttemptIdRoute: typeof AuthenticatedResultsAttemptIdRoute
   AuthenticatedTournamentAttemptIdRoute: typeof AuthenticatedTournamentAttemptIdRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminCourseCourseIdRoute: typeof AuthenticatedAdminCourseCourseIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedChallengesRoute: AuthenticatedChallengesRoute,
   AuthenticatedChatRoute: AuthenticatedChatRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
@@ -563,6 +552,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedPracticeCourseIdRoute: AuthenticatedPracticeCourseIdRoute,
   AuthenticatedResultsAttemptIdRoute: AuthenticatedResultsAttemptIdRoute,
   AuthenticatedTournamentAttemptIdRoute: AuthenticatedTournamentAttemptIdRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  AuthenticatedAdminCourseCourseIdRoute: AuthenticatedAdminCourseCourseIdRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -597,3 +588,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
