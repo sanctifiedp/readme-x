@@ -13,7 +13,7 @@ export function SiteFooter() {
         <div>
           <h3 className="font-semibold mb-2">ReadMe</h3>
           <p className="text-sm text-muted-foreground">
-            Timed CBT practice from your course's question bank — with AI hints when you're stuck.
+            Timed CBT practice from your course's question bank - with AI hints when you're stuck.
             Built by students, for students.
           </p>
         </div>
