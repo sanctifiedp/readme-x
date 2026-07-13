@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import {
   Loader2, Plus, Sparkles, Upload, Users, FileText, ShieldCheck, Heart, Check, X,
-  Trash2, ExternalLink, BookOpen, MessageSquare, Archive, ArchiveRestore,
+  Trash2, ExternalLink, BookOpen, MessageSquare, Archive, ArchiveRestore, Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,10 @@ import {
   listSchools, listDepartments, createSchool, updateSchool, deleteSchool,
   createDepartment, updateDepartment, deleteDepartment,
 } from "@/lib/lookups.functions";
+import {
+  createTournament, updateTournament, deleteTournament, listTournaments,
+  finalizeTournament, listPendingPayouts, approvePayout, getPoolStatus,
+} from "@/lib/tournaments.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { SchoolDepartmentPicker } from "@/components/SchoolDepartmentPicker";
 
@@ -68,6 +72,7 @@ function AdminPage() {
             <TabsTrigger value="ai">AI generation</TabsTrigger>
             <TabsTrigger value="notes">Notes</TabsTrigger>
             <TabsTrigger value="chat">Chat rooms</TabsTrigger>
+            <TabsTrigger value="tournaments">Tournaments</TabsTrigger>
             <TabsTrigger value="lookups">Schools & Departments</TabsTrigger>
             <TabsTrigger value="donations">Donations</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
@@ -78,6 +83,7 @@ function AdminPage() {
           <TabsContent value="ai" className="mt-4"><CoursesTab courses={data?.courses ?? []} /></TabsContent>
           <TabsContent value="notes" className="mt-4"><NotesTab /></TabsContent>
           <TabsContent value="chat" className="mt-4"><ChatRoomsTab /></TabsContent>
+          <TabsContent value="tournaments" className="mt-4"><TournamentsTab courses={data?.courses ?? []} /></TabsContent>
           <TabsContent value="lookups" className="mt-4"><LookupsTab /></TabsContent>
           <TabsContent value="donations" className="mt-4"><DonationsTab /></TabsContent>
           <TabsContent value="users" className="mt-4"><UsersTab /></TabsContent>
