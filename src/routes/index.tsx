@@ -86,7 +86,7 @@ function Home() {
               <p className="text-xs font-semibold uppercase tracking-wider text-primary">A peek inside</p>
               <h2 className="text-2xl md:text-3xl font-bold mt-2">Every question, one tap from a hint.</h2>
               <p className="mt-3 text-muted-foreground">
-                Pick a course, set your time and how many questions, then practice. Every prompt has an AI hint waiting — a single sentence to nudge you forward without giving away the answer.
+                Pick a course, set your time and how many questions, then practice. Every prompt has an AI hint waiting, a single sentence to nudge you forward without giving away the answer.
               </p>
               <Link to="/courses" className="inline-block mt-5">
                 <Button>Start practicing <ArrowRight className="h-4 w-4 ml-2" /></Button>
@@ -117,7 +117,7 @@ function Home() {
               <Quote className="h-5 w-5" />
             </div>
             <p className="mt-3 max-w-2xl mx-auto text-muted-foreground">
-              <span className="font-semibold text-foreground">Built by students, for students.</span> ReadMe is in early access — your feedback shapes what we ship next.
+              <span className="font-semibold text-foreground">Built by students, for students.</span> ReadMe is in early access, your feedback shapes what we ship next.
             </p>
             <a href={FEEDBACK_URL} target="_blank" rel="noreferrer" className="inline-block mt-5">
               <Button variant="outline" className="gap-2"><MessageSquareText className="h-4 w-4" /> Give feedback</Button>
@@ -131,7 +131,7 @@ function Home() {
           <div className="grid sm:grid-cols-2 gap-4 mt-6 max-w-3xl mx-auto">
             {[
               { icon: Brain, title: "Smart recommendations", body: "We'll suggest what to revise next based on your attempts." },
-              { icon: Rocket, title: "Grok AI integration", body: "Bring your own Grok API key to power deeper explanations." },
+              { icon: Rocket, title: "Grok AI integration", body: "Grok API key to power deeper explanations." },
             ].map((f) => (
               <div key={f.title} className="rounded-xl border border-dashed border-border p-5 bg-background/50">
                 <div className="flex items-center gap-2">
