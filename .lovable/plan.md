@@ -1,36 +1,26 @@
-## Root cause
+## What's happening
 
-`adeyigbeminiyi414@gmail.com` is a real super admin (has `student`, `admin`, and `super_admin` rows in `user_roles`). Creating a question bank fails because of a bug in the admin check, not a missing role.
+The preview showed:
 
-In `src/lib/courses.functions.ts` and `src/lib/tournaments.functions.ts`, `assertAdmin` runs:
+> Missing Supabase environment variable(s): SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY. Connect Supabase in Lovable Cloud.
 
-```ts
-.from("user_roles").select("role").eq("user_id", userId)
-  .in("role", ["admin","super_admin"]).maybeSingle();
-```
+From the checks I ran:
 
-A super admin matches **two** rows (`admin` + `super_admin`). `.maybeSingle()` rejects any result with more than one row, so `data` comes back `null` and the function throws `"Forbidden: admin only"` — exactly the message the user is seeing when adding a course / uploading material / generating questions.
+- The hosted backend is healthy.
+- The project's `.env` still contains all six expected values (`SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_PROJECT_ID`, and the three `VITE_` twins).
+- No code was changed to how the Supabase client reads these variables.
 
-The single-role helpers in `admin.functions.ts`, `notes.functions.ts`, `chat.functions.ts`, `donations.functions.ts` use `.eq("role","admin")` so they're unaffected.
+So this isn't a code bug — it's the managed env not being present in the running preview sandbox at the moment that request was served (a stale worker started before `.env` was materialized). The stock recovery is a dev-server restart so the fresh env is picked up.
 
-## Fix
+## Plan
 
-1. **`src/lib/courses.functions.ts`** — change `assertAdmin` to tolerate multiple matching roles:
-   ```ts
-   .in("role", ["admin","super_admin"]).limit(1).maybeSingle();
-   ```
-2. **`src/lib/tournaments.functions.ts`** — same one-line fix.
+1. Restart the preview dev server so it re-reads `.env` with the current Supabase values.
+2. Reload the site and confirm `/` renders and Supabase-backed calls (e.g. sign-in page, `/courses`) work.
+3. If the error returns after restart, refresh the Lovable Cloud integration to regenerate the managed `.env`, then restart again.
 
-No schema change, no migration, no UI change. Pure server-fn bugfix that unblocks every admin/super-admin write path on courses, materials, questions (manual + AI), and tournament management.
+No source files will change.
 
-## Verification
+## Technical notes
 
-After the edit, signed in as `adeyigbeminiyi414@gmail.com`:
-- Create a new course → succeeds.
-- Upload a material / AI-generate questions / add a question manually → succeeds.
-- Create / edit / delete a tournament → succeeds.
-- Non-admin account still gets `Forbidden: admin only`.
-
-## Out of scope for this turn
-
-Unfinished features (Admin Tournaments CRUD tab, Schools/Departments admin, Friends + challenges, Announcements/notifications) — happy to pick one up next once this blocker is cleared.
+- `src/integrations/supabase/client.ts` reads `import.meta.env.VITE_SUPABASE_URL` with a `process.env.SUPABASE_URL` SSR fallback — both are present in `.env`, so no client edits are needed.
+- `.env` is git-ignored (expected for the classic Vite/managed-Supabase setup); we won't commit it.
