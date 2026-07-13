@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          title: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          title: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          title?: string
+        }
+        Relationships: []
+      }
       attempt_answers: {
         Row: {
           attempt_id: string
@@ -335,6 +362,30 @@ export type Database = {
           },
         ]
       }
+      device_fingerprints: {
+        Row: {
+          created_at: string
+          fingerprint_hash: string
+          id: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fingerprint_hash: string
+          id?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fingerprint_hash?: string
+          id?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       donations: {
         Row: {
           amount: number
@@ -553,7 +604,15 @@ export type Database = {
           id: string
           level: string | null
           matric_no: string | null
+          phone: string | null
+          phone_verified: boolean
           school: string | null
+          verification_document_url: string | null
+          verification_rejected_reason: string | null
+          verification_reviewed_at: string | null
+          verification_reviewed_by: string | null
+          verification_status: string
+          verification_submitted_at: string | null
         }
         Insert: {
           created_at?: string
@@ -563,7 +622,15 @@ export type Database = {
           id: string
           level?: string | null
           matric_no?: string | null
+          phone?: string | null
+          phone_verified?: boolean
           school?: string | null
+          verification_document_url?: string | null
+          verification_rejected_reason?: string | null
+          verification_reviewed_at?: string | null
+          verification_reviewed_by?: string | null
+          verification_status?: string
+          verification_submitted_at?: string | null
         }
         Update: {
           created_at?: string
@@ -573,7 +640,15 @@ export type Database = {
           id?: string
           level?: string | null
           matric_no?: string | null
+          phone?: string | null
+          phone_verified?: boolean
           school?: string | null
+          verification_document_url?: string | null
+          verification_rejected_reason?: string | null
+          verification_reviewed_at?: string | null
+          verification_reviewed_by?: string | null
+          verification_status?: string
+          verification_submitted_at?: string | null
         }
         Relationships: []
       }
@@ -722,18 +797,27 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          snapshot_department: string | null
+          snapshot_level: string | null
+          snapshot_school: string | null
           tournament_id: string
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          snapshot_department?: string | null
+          snapshot_level?: string | null
+          snapshot_school?: string | null
           tournament_id: string
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          snapshot_department?: string | null
+          snapshot_level?: string | null
+          snapshot_school?: string | null
           tournament_id?: string
           user_id?: string
         }
