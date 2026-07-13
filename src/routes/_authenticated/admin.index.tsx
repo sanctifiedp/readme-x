@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import {
   Loader2, Plus, Sparkles, Upload, Users, FileText, ShieldCheck, Heart, Check, X,
-  Trash2, ExternalLink, BookOpen, MessageSquare, Archive, ArchiveRestore,
+  Trash2, ExternalLink, BookOpen, MessageSquare, Archive, ArchiveRestore, Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,10 @@ import {
   listSchools, listDepartments, createSchool, updateSchool, deleteSchool,
   createDepartment, updateDepartment, deleteDepartment,
 } from "@/lib/lookups.functions";
+import {
+  createTournament, updateTournament, deleteTournament, listTournaments,
+  finalizeTournament, listPendingPayouts, approvePayout, getPoolStatus,
+} from "@/lib/tournaments.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { SchoolDepartmentPicker } from "@/components/SchoolDepartmentPicker";
 
@@ -68,6 +72,7 @@ function AdminPage() {
             <TabsTrigger value="ai">AI generation</TabsTrigger>
             <TabsTrigger value="notes">Notes</TabsTrigger>
             <TabsTrigger value="chat">Chat rooms</TabsTrigger>
+            <TabsTrigger value="tournaments">Tournaments</TabsTrigger>
             <TabsTrigger value="lookups">Schools & Departments</TabsTrigger>
             <TabsTrigger value="donations">Donations</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
@@ -78,6 +83,7 @@ function AdminPage() {
           <TabsContent value="ai" className="mt-4"><CoursesTab courses={data?.courses ?? []} /></TabsContent>
           <TabsContent value="notes" className="mt-4"><NotesTab /></TabsContent>
           <TabsContent value="chat" className="mt-4"><ChatRoomsTab /></TabsContent>
+          <TabsContent value="tournaments" className="mt-4"><TournamentsTab courses={data?.courses ?? []} /></TabsContent>
           <TabsContent value="lookups" className="mt-4"><LookupsTab /></TabsContent>
           <TabsContent value="donations" className="mt-4"><DonationsTab /></TabsContent>
           <TabsContent value="users" className="mt-4"><UsersTab /></TabsContent>
@@ -824,5 +830,331 @@ function LookupsTab() {
         )}
       </div>
     </div>
+  );
+}
+
+/* ─── Tournaments tab ─────────────────────────────────── */
+
+type TournamentRow = {
+  id: string;
+  title: string;
+  description: string | null;
+  target_school: string;
+  target_department: string;
+  target_level: string;
+  prize_amount: number;
+  status: string;
+  registration_open: boolean;
+  starts_at: string | null;
+  ends_at: string | null;
+  course_id: string;
+  question_count: number;
+  duration_seconds: number;
+  courses?: { code: string; title: string } | null;
+};
+
+function TournamentsTab({ courses }: { courses: AdminCourse[] }) {
+  const qc = useQueryClient();
+  const listFn = useServerFn(listTournaments);
+  const createFn = useServerFn(createTournament);
+  const updateFn = useServerFn(updateTournament);
+  const delFn = useServerFn(deleteTournament);
+  const finalizeFn = useServerFn(finalizeTournament);
+  const poolFn = useServerFn(getPoolStatus);
+  const payoutsFn = useServerFn(listPendingPayouts);
+  const approveFn = useServerFn(approvePayout);
+
+  const { data: tournaments = [] } = useQuery({
+    queryKey: ["admin-tournaments"],
+    queryFn: () => listFn({ data: {} }) as Promise<TournamentRow[]>,
+  });
+  const { data: pool } = useQuery({ queryKey: ["admin-pool"], queryFn: () => poolFn() });
+  const { data: payouts = [] } = useQuery({ queryKey: ["admin-payouts"], queryFn: () => payoutsFn() });
+
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["admin-tournaments"] });
+    qc.invalidateQueries({ queryKey: ["admin-pool"] });
+    qc.invalidateQueries({ queryKey: ["admin-payouts"] });
+  };
+
+  const createMut = useMutation({
+    mutationFn: (d: Parameters<typeof createFn>[0]["data"]) => createFn({ data: d }),
+    onSuccess: () => { toast.success("Tournament created"); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const updateMut = useMutation({
+    mutationFn: (v: { id: string; patch: Record<string, unknown> }) => updateFn({ data: v }),
+    onSuccess: () => { toast.success("Updated"); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const delMut = useMutation({
+    mutationFn: (id: string) => delFn({ data: { id } }),
+    onSuccess: () => { toast.success("Deleted"); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const finalizeMut = useMutation({
+    mutationFn: (id: string) => finalizeFn({ data: { id } }),
+    onSuccess: () => { toast.success("Finalized"); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const approveMut = useMutation({
+    mutationFn: (winnerId: string) => approveFn({ data: { winnerId } }),
+    onSuccess: () => { toast.success("Payout approved"); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="grid sm:grid-cols-3 gap-3">
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">Donation pool</div>
+          <div className="text-xl font-bold">₦{Number(pool?.available ?? 0).toLocaleString()}</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            In: ₦{Number(pool?.donated ?? 0).toLocaleString()} · Paid: ₦{Number(pool?.paid ?? 0).toLocaleString()}
+          </div>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">Tournaments</div>
+          <div className="text-xl font-bold">{tournaments.length}</div>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">Pending payouts</div>
+          <div className="text-xl font-bold">{payouts.length}</div>
+        </div>
+      </div>
+
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold flex items-center gap-2"><Trophy className="h-5 w-5 text-primary" /> Tournaments</h2>
+        <CreateTournamentDialog
+          courses={courses}
+          onSubmit={(d) => createMut.mutate(d)}
+          pending={createMut.isPending}
+        />
+      </div>
+
+      {tournaments.length === 0 ? (
+        <Empty>No tournaments yet. Create one to open registration to eligible students.</Empty>
+      ) : (
+        <div className="space-y-3">
+          {tournaments.map((t) => (
+            <div key={t.id} className="rounded-xl border border-border bg-card p-5 space-y-3">
+              <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold">{t.title}</span>
+                    <StatusBadge status={t.status} />
+                    <span className={`text-[11px] px-2 py-0.5 rounded-full ${t.registration_open ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                      {t.registration_open ? "Registration open" : "Registration closed"}
+                    </span>
+                  </div>
+                  {t.description && <p className="text-sm text-muted-foreground mt-1">{t.description}</p>}
+                  <div className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                    <span>Prize: ₦{Number(t.prize_amount).toLocaleString()}</span>
+                    <span>Course: {t.courses?.code ?? "—"}</span>
+                    <span>{t.question_count} Qs · {Math.round(t.duration_seconds / 60)} min</span>
+                    <span>{t.target_school} / {t.target_department} / {t.target_level}</span>
+                  </div>
+                  {t.ends_at && <div className="text-xs text-muted-foreground mt-1">Ends: {new Date(t.ends_at).toLocaleString()}</div>}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={() =>
+                    updateMut.mutate({ id: t.id, patch: { registrationOpen: !t.registration_open } })
+                  }>
+                    {t.registration_open ? "Close reg" : "Open reg"}
+                  </Button>
+                  <select
+                    className="h-9 px-2 rounded-md border border-input bg-background text-sm"
+                    value={t.status}
+                    onChange={(e) => updateMut.mutate({ id: t.id, patch: { status: e.target.value } })}
+                  >
+                    <option value="upcoming">Upcoming</option>
+                    <option value="active">Active</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                  <Button size="sm" variant="outline" onClick={() => {
+                    if (confirm("Finalize now? Picks a winner from submitted attempts.")) finalizeMut.mutate(t.id);
+                  }}>Finalize</Button>
+                  <Link
+                    to="/tournaments/$id" params={{ id: t.id }}
+                    className="inline-flex items-center h-9 px-3 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Link>
+                  <Button size="sm" variant="ghost" onClick={() => {
+                    if (confirm("Delete tournament? This removes registrations and attempts.")) delMut.mutate(t.id);
+                  }}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="space-y-3">
+        <h2 className="text-xl font-semibold">Pending payouts</h2>
+        {payouts.length === 0 ? (
+          <Empty>No payouts awaiting approval.</Empty>
+        ) : (
+          <div className="space-y-2">
+            {payouts.map((w) => {
+              const details = (w.payout_details ?? {}) as { bankName?: string; accountNumber?: string; accountName?: string; phone?: string };
+              return (
+                <div key={w.id} className="rounded-xl border border-border bg-card p-4 flex flex-col md:flex-row md:items-center gap-3 justify-between">
+                  <div className="text-sm">
+                    <div className="font-semibold">{w.tournaments?.title ?? "Tournament"} · ₦{Number(w.prize_amount).toLocaleString()}</div>
+                    <div className="text-xs text-muted-foreground">Winner: {w.winner?.full_name ?? "—"} ({w.winner?.email ?? "—"})</div>
+                    <div className="text-xs text-muted-foreground">
+                      Status: {w.payout_status}
+                      {details.bankName && <> · {details.bankName} {details.accountNumber} ({details.accountName}) · {details.phone}</>}
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    disabled={w.payout_status !== "pending_approval" || approveMut.isPending}
+                    onClick={() => approveMut.mutate(w.id)}
+                  >
+                    Approve payout
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, string> = {
+    upcoming: "bg-blue-500/10 text-blue-600",
+    active: "bg-green-500/10 text-green-600",
+    completed: "bg-muted text-muted-foreground",
+    cancelled: "bg-destructive/10 text-destructive",
+  };
+  return <span className={`text-[11px] px-2 py-0.5 rounded-full ${map[status] ?? "bg-muted"}`}>{status}</span>;
+}
+
+function CreateTournamentDialog({
+  courses, onSubmit, pending,
+}: {
+  courses: AdminCourse[];
+  onSubmit: (d: {
+    title: string; description?: string;
+    targetSchool: string; targetDepartment: string; targetLevel: string;
+    prizeAmount: number; minParticipants: number; minDonationPool: number;
+    courseId: string; questionCount: number; durationSeconds: number;
+    startsAt?: string | null; endsAt?: string | null;
+    registrationOpen: boolean; status: "upcoming" | "active" | "completed" | "cancelled";
+  }) => void;
+  pending: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [school, setSchool] = useState("");
+  const [department, setDepartment] = useState("");
+  const [courseId, setCourseId] = useState("");
+
+  const reset = () => { setSchool(""); setDepartment(""); setCourseId(""); };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
+      <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-1" /> New tournament</Button></DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Create tournament</DialogTitle></DialogHeader>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const fd = new FormData(e.currentTarget);
+            if (!courseId) { toast.error("Pick a course"); return; }
+            if (!school || !department) { toast.error("Pick school and department"); return; }
+            const startsAt = String(fd.get("startsAt") ?? "");
+            const endsAt = String(fd.get("endsAt") ?? "");
+            onSubmit({
+              title: String(fd.get("title")),
+              description: String(fd.get("description") ?? "") || undefined,
+              targetSchool: school,
+              targetDepartment: department,
+              targetLevel: String(fd.get("level")),
+              prizeAmount: Number(fd.get("prizeAmount")),
+              minParticipants: Number(fd.get("minParticipants")),
+              minDonationPool: Number(fd.get("minDonationPool")),
+              courseId,
+              questionCount: Number(fd.get("questionCount")),
+              durationSeconds: Number(fd.get("durationMinutes")) * 60,
+              startsAt: startsAt ? new Date(startsAt).toISOString() : null,
+              endsAt: endsAt ? new Date(endsAt).toISOString() : null,
+              registrationOpen: fd.get("registrationOpen") === "on",
+              status: (String(fd.get("status")) as "upcoming" | "active" | "completed" | "cancelled") || "upcoming",
+            });
+            setOpen(false);
+            reset();
+          }}
+          className="space-y-3"
+        >
+          <Field label="Title" name="title" required />
+          <div className="space-y-1.5">
+            <Label htmlFor="t-desc">Description</Label>
+            <Textarea id="t-desc" name="description" rows={2} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Course</Label>
+            <select
+              value={courseId}
+              onChange={(e) => setCourseId(e.target.value)}
+              className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+              required
+            >
+              <option value="">Select a course…</option>
+              {courses.map((c) => (
+                <option key={c.id} value={c.id}>{c.code} — {c.title} ({c.questionCount} Qs)</option>
+              ))}
+            </select>
+          </div>
+          <SchoolDepartmentPicker
+            schoolValue={school}
+            departmentValue={department}
+            onSchoolChange={setSchool}
+            onDepartmentChange={setDepartment}
+            layout="grid"
+          />
+          <Field label="Level" name="level" placeholder="100" required />
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Prize amount (₦)" name="prizeAmount" type="number" min={0} defaultValue={0} required />
+            <Field label="Min participants" name="minParticipants" type="number" min={1} defaultValue={3} required />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <Field label="Question count" name="questionCount" type="number" min={1} max={70} defaultValue={20} required />
+            <Field label="Duration (min)" name="durationMinutes" type="number" min={1} max={30} defaultValue={15} required />
+            <Field label="Min pool (₦)" name="minDonationPool" type="number" min={0} defaultValue={0} required />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Starts at" name="startsAt" type="datetime-local" />
+            <Field label="Ends at" name="endsAt" type="datetime-local" />
+          </div>
+          <div className="grid grid-cols-2 gap-3 items-end">
+            <div className="space-y-1.5">
+              <Label htmlFor="t-status">Status</Label>
+              <select id="t-status" name="status" defaultValue="upcoming" className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm">
+                <option value="upcoming">Upcoming</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <label className="flex items-center gap-2 text-sm pb-2">
+              <input type="checkbox" name="registrationOpen" defaultChecked /> Registration open
+            </label>
+          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={pending}>
+              {pending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Create
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
