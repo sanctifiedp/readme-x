@@ -878,7 +878,8 @@ function TournamentsTab({ courses }: { courses: AdminCourse[] }) {
   };
 
   const createMut = useMutation({
-    mutationFn: (d: Parameters<typeof createFn>[0]["data"]) => createFn({ data: d }),
+    mutationFn: (d: Record<string, unknown>) =>
+      (createFn as (o: { data: unknown }) => Promise<{ id: string }>)({ data: d }),
     onSuccess: () => { toast.success("Tournament created"); refresh(); },
     onError: (e: Error) => toast.error(e.message),
   });

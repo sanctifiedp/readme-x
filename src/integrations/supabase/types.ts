@@ -80,6 +80,36 @@ export type Database = {
           },
         ]
       }
+      badges: {
+        Row: {
+          code: string
+          created_at: string
+          criteria: Json
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          criteria?: Json
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          criteria?: Json
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       challenge_attempts: {
         Row: {
           answers: Json | null
@@ -302,33 +332,42 @@ export type Database = {
       }
       courses: {
         Row: {
+          academic_level: string | null
           code: string
           created_at: string
           department: string | null
           description: string | null
+          faculty: string | null
           id: string
           level: string | null
           school: string | null
+          semester: string | null
           title: string
         }
         Insert: {
+          academic_level?: string | null
           code: string
           created_at?: string
           department?: string | null
           description?: string | null
+          faculty?: string | null
           id?: string
           level?: string | null
           school?: string | null
+          semester?: string | null
           title: string
         }
         Update: {
+          academic_level?: string | null
           code?: string
           created_at?: string
           department?: string | null
           description?: string | null
+          faculty?: string | null
           id?: string
           level?: string | null
           school?: string | null
+          semester?: string | null
           title?: string
         }
         Relationships: []
@@ -428,10 +467,12 @@ export type Database = {
       exam_attempts: {
         Row: {
           course_id: string | null
+          current_index: number
           duration_seconds: number
           exam_id: string | null
           expires_at: string | null
           id: string
+          last_activity_at: string
           question_ids: Json
           score: number | null
           started_at: string
@@ -441,10 +482,12 @@ export type Database = {
         }
         Insert: {
           course_id?: string | null
+          current_index?: number
           duration_seconds?: number
           exam_id?: string | null
           expires_at?: string | null
           id?: string
+          last_activity_at?: string
           question_ids: Json
           score?: number | null
           started_at?: string
@@ -454,10 +497,12 @@ export type Database = {
         }
         Update: {
           course_id?: string | null
+          current_index?: number
           duration_seconds?: number
           exam_id?: string | null
           expires_at?: string | null
           id?: string
+          last_activity_at?: string
           question_ids?: Json
           score?: number | null
           started_at?: string
@@ -595,11 +640,42 @@ export type Database = {
         }
         Relationships: []
       }
+      pinned_courses: {
+        Row: {
+          course_id: string
+          id: string
+          pinned_at: string
+          user_id: string
+        }
+        Insert: {
+          course_id: string
+          id?: string
+          pinned_at?: string
+          user_id: string
+        }
+        Update: {
+          course_id?: string
+          id?: string
+          pinned_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pinned_courses_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
           department: string | null
           email: string | null
+          faculty: string | null
           full_name: string | null
           id: string
           level: string | null
@@ -607,17 +683,23 @@ export type Database = {
           phone: string | null
           phone_verified: boolean
           school: string | null
+          streak_count: number
+          streak_last_day: string | null
+          username: string | null
           verification_document_url: string | null
           verification_rejected_reason: string | null
           verification_reviewed_at: string | null
           verification_reviewed_by: string | null
           verification_status: string
           verification_submitted_at: string | null
+          xp: number
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
           department?: string | null
           email?: string | null
+          faculty?: string | null
           full_name?: string | null
           id: string
           level?: string | null
@@ -625,17 +707,23 @@ export type Database = {
           phone?: string | null
           phone_verified?: boolean
           school?: string | null
+          streak_count?: number
+          streak_last_day?: string | null
+          username?: string | null
           verification_document_url?: string | null
           verification_rejected_reason?: string | null
           verification_reviewed_at?: string | null
           verification_reviewed_by?: string | null
           verification_status?: string
           verification_submitted_at?: string | null
+          xp?: number
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
           department?: string | null
           email?: string | null
+          faculty?: string | null
           full_name?: string | null
           id?: string
           level?: string | null
@@ -643,12 +731,16 @@ export type Database = {
           phone?: string | null
           phone_verified?: boolean
           school?: string | null
+          streak_count?: number
+          streak_last_day?: string | null
+          username?: string | null
           verification_document_url?: string | null
           verification_rejected_reason?: string | null
           verification_reviewed_at?: string | null
           verification_reviewed_by?: string | null
           verification_status?: string
           verification_submitted_at?: string | null
+          xp?: number
         }
         Relationships: []
       }
@@ -952,6 +1044,67 @@ export type Database = {
           },
         ]
       }
+      user_badges: {
+        Row: {
+          badge_id: string
+          earned_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          earned_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          earned_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_extra_courses: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          kind: string
+          user_id: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          id?: string
+          kind?: string
+          user_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_extra_courses_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -970,11 +1123,56 @@ export type Database = {
         }
         Relationships: []
       }
+      xp_events: {
+        Row: {
+          amount: number
+          course_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xp_events_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      award_xp: {
+        Args: {
+          _amount: number
+          _course_id?: string
+          _kind: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
+      bump_streak: { Args: { _user_id: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -982,6 +1180,26 @@ export type Database = {
         }
         Returns: boolean
       }
+      leaderboard: {
+        Args: {
+          _limit?: number
+          _scope?: string
+          _scope_value?: string
+          _window?: string
+        }
+        Returns: {
+          avatar_url: string
+          department: string
+          full_name: string
+          level: string
+          rank: number
+          school: string
+          user_id: string
+          username: string
+          xp: number
+        }[]
+      }
+      readme_level: { Args: { _xp: number }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "student" | "super_admin"
