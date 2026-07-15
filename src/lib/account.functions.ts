@@ -8,11 +8,29 @@ export const getMyProfile = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data: profile, error } = await supabaseAdmin
       .from("profiles")
-      .select("id, email, full_name, matric_no, school, department, level, created_at")
+      .select("id, email, username, full_name, avatar_url, matric_no, school, faculty, department, level, xp, streak_count, created_at")
       .eq("id", context.userId)
       .single();
     if (error) throw new Error(error.message);
     return profile;
+  });
+
+const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
+
+export const checkUsernameAvailable = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ username: z.string().trim() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const uname = data.username.trim();
+    if (!USERNAME_RE.test(uname)) return { available: false, reason: "Must be 3–20 letters, numbers, or underscores." };
+    const { data: rows, error } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .ilike("username", uname)
+      .limit(1);
+    if (error) throw new Error(error.message);
+    const taken = (rows ?? []).some((r) => r.id !== context.userId);
+    return { available: !taken, reason: taken ? "That username is taken." : undefined };
   });
 
 export const updateMyProfile = createServerFn({ method: "POST" })
@@ -21,26 +39,53 @@ export const updateMyProfile = createServerFn({ method: "POST" })
     z
       .object({
         full_name: z.string().trim().min(1).max(120),
+        username: z.string().trim().regex(USERNAME_RE, "3–20 letters, numbers or underscores").optional(),
+        avatar_url: z.string().trim().url().max(500).optional().or(z.literal("")),
         matric_no: z.string().trim().max(60).optional().default(""),
         school: z.string().trim().max(120).optional().default(""),
+        faculty: z.string().trim().max(120).optional().default(""),
         department: z.string().trim().max(120).optional().default(""),
         level: z.string().trim().max(20).optional().default(""),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    if (data.username) {
+      const { data: rows, error: e1 } = await supabaseAdmin
+        .from("profiles").select("id").ilike("username", data.username).limit(1);
+      if (e1) throw new Error(e1.message);
+      if ((rows ?? []).some((r) => r.id !== context.userId)) {
+        throw new Error("That username is taken.");
+      }
+    }
     const { error } = await supabaseAdmin
       .from("profiles")
       .update({
         full_name: data.full_name,
+        username: data.username || undefined,
+        avatar_url: data.avatar_url ? data.avatar_url : null,
         matric_no: data.matric_no || null,
         school: data.school || null,
+        faculty: data.faculty || null,
         department: data.department || null,
         level: data.level || null,
       })
       .eq("id", context.userId);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+export const getPublicProfileByUsername = createServerFn({ method: "GET" })
+  .inputValidator((input) => z.object({ username: z.string().trim().min(1).max(40) }).parse(input))
+  .handler(async ({ data }) => {
+    const { data: profile, error } = await supabaseAdmin
+      .from("profiles")
+      .select("id, username, full_name, avatar_url, school, faculty, department, level, xp, streak_count, created_at")
+      .ilike("username", data.username)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!profile) throw new Error("User not found");
+    return profile;
   });
 
 export const deleteMyAccount = createServerFn({ method: "POST" })
