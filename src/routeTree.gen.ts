@@ -19,6 +19,7 @@ import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as UUsernameRouteImport } from './routes/u.$username'
 import { Route as TournamentsIdRouteImport } from './routes/tournaments.$id'
 import { Route as TakeExamIdRouteImport } from './routes/take.$examId'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -83,6 +84,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UUsernameRoute = UUsernameRouteImport.update({
+  id: '/u/$username',
+  path: '/u/$username',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TournamentsIdRoute = TournamentsIdRouteImport.update({
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/take/$examId': typeof TakeExamIdRoute
   '/tournaments/$id': typeof TournamentsIdRoute
+  '/u/$username': typeof UUsernameRoute
   '/challenge/$challengeId': typeof AuthenticatedChallengeChallengeIdRoute
   '/courses/$code': typeof AuthenticatedCoursesCodeRoute
   '/exam/$attemptId': typeof AuthenticatedExamAttemptIdRoute
@@ -218,6 +225,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/take/$examId': typeof TakeExamIdRoute
   '/tournaments/$id': typeof TournamentsIdRoute
+  '/u/$username': typeof UUsernameRoute
   '/challenge/$challengeId': typeof AuthenticatedChallengeChallengeIdRoute
   '/courses/$code': typeof AuthenticatedCoursesCodeRoute
   '/exam/$attemptId': typeof AuthenticatedExamAttemptIdRoute
@@ -247,6 +255,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/take/$examId': typeof TakeExamIdRoute
   '/tournaments/$id': typeof TournamentsIdRoute
+  '/u/$username': typeof UUsernameRoute
   '/_authenticated/challenge/$challengeId': typeof AuthenticatedChallengeChallengeIdRoute
   '/_authenticated/courses/$code': typeof AuthenticatedCoursesCodeRoute
   '/_authenticated/exam/$attemptId': typeof AuthenticatedExamAttemptIdRoute
@@ -276,6 +285,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/take/$examId'
     | '/tournaments/$id'
+    | '/u/$username'
     | '/challenge/$challengeId'
     | '/courses/$code'
     | '/exam/$attemptId'
@@ -303,6 +313,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/take/$examId'
     | '/tournaments/$id'
+    | '/u/$username'
     | '/challenge/$challengeId'
     | '/courses/$code'
     | '/exam/$attemptId'
@@ -331,6 +342,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/take/$examId'
     | '/tournaments/$id'
+    | '/u/$username'
     | '/_authenticated/challenge/$challengeId'
     | '/_authenticated/courses/$code'
     | '/_authenticated/exam/$attemptId'
@@ -353,6 +365,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   TournamentsRoute: typeof TournamentsRouteWithChildren
   TakeExamIdRoute: typeof TakeExamIdRoute
+  UUsernameRoute: typeof UUsernameRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -425,6 +438,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/u/$username': {
+      id: '/u/$username'
+      path: '/u/$username'
+      fullPath: '/u/$username'
+      preLoaderRoute: typeof UUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tournaments/$id': {
@@ -605,6 +625,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   TournamentsRoute: TournamentsRouteWithChildren,
   TakeExamIdRoute: TakeExamIdRoute,
+  UUsernameRoute: UUsernameRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
