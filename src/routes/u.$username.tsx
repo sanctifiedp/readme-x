@@ -49,7 +49,7 @@ function PublicProfilePage() {
     retry: false,
   });
 
-  if (isError) throw notFound();
+  if (isError) return <NotFound />;
 
   return (
     <div className="min-h-screen flex flex-col">
