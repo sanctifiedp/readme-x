@@ -21,6 +21,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TournamentsIdRouteImport } from './routes/tournaments.$id'
 import { Route as TakeExamIdRouteImport } from './routes/take.$examId'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedFriendsRouteImport } from './routes/_authenticated/friends'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -93,6 +94,11 @@ const TakeExamIdRoute = TakeExamIdRouteImport.update({
   id: '/take/$examId',
   path: '/take/$examId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
@@ -182,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/friends': typeof AuthenticatedFriendsRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/take/$examId': typeof TakeExamIdRoute
   '/tournaments/$id': typeof TournamentsIdRoute
   '/challenge/$challengeId': typeof AuthenticatedChallengeChallengeIdRoute
@@ -208,6 +215,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/friends': typeof AuthenticatedFriendsRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/take/$examId': typeof TakeExamIdRoute
   '/tournaments/$id': typeof TournamentsIdRoute
   '/challenge/$challengeId': typeof AuthenticatedChallengeChallengeIdRoute
@@ -236,6 +244,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/friends': typeof AuthenticatedFriendsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/take/$examId': typeof TakeExamIdRoute
   '/tournaments/$id': typeof TournamentsIdRoute
   '/_authenticated/challenge/$challengeId': typeof AuthenticatedChallengeChallengeIdRoute
@@ -264,6 +273,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/friends'
     | '/profile'
+    | '/settings'
     | '/take/$examId'
     | '/tournaments/$id'
     | '/challenge/$challengeId'
@@ -290,6 +300,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/friends'
     | '/profile'
+    | '/settings'
     | '/take/$examId'
     | '/tournaments/$id'
     | '/challenge/$challengeId'
@@ -317,6 +328,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/friends'
     | '/_authenticated/profile'
+    | '/_authenticated/settings'
     | '/take/$examId'
     | '/tournaments/$id'
     | '/_authenticated/challenge/$challengeId'
@@ -429,6 +441,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TakeExamIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/profile': {
       id: '/_authenticated/profile'
       path: '/profile'
@@ -529,6 +548,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFriendsRoute: typeof AuthenticatedFriendsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedChallengeChallengeIdRoute: typeof AuthenticatedChallengeChallengeIdRoute
   AuthenticatedCoursesCodeRoute: typeof AuthenticatedCoursesCodeRoute
   AuthenticatedExamAttemptIdRoute: typeof AuthenticatedExamAttemptIdRoute
@@ -545,6 +565,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFriendsRoute: AuthenticatedFriendsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedChallengeChallengeIdRoute:
     AuthenticatedChallengeChallengeIdRoute,
   AuthenticatedCoursesCodeRoute: AuthenticatedCoursesCodeRoute,
