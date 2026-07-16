@@ -171,10 +171,17 @@ export const pinCourse = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ courseId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
+    const { data: existing } = await supabaseAdmin
+      .from("pinned_courses")
+      .select("id")
+      .eq("user_id", context.userId)
+      .eq("course_id", data.courseId)
+      .maybeSingle();
+    if (existing) return { ok: true };
     const { error } = await supabaseAdmin
       .from("pinned_courses")
       .insert({ user_id: context.userId, course_id: data.courseId });
-    if (error && !/duplicate|unique/i.test(error.message)) throw new Error(error.message);
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 
