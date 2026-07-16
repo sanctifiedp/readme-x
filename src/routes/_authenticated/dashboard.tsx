@@ -462,7 +462,7 @@ function Dashboard() {
                   : "Set your academic details in Settings for personalized picks."}
               </p>
             </div>
-            <Link to="/practice">
+            <Link to="/courses">
               <Button variant="ghost" size="sm">Browse all →</Button>
             </Link>
           </div>
