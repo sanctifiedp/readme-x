@@ -16,6 +16,10 @@ type CourseRow = {
 function readmeLevel(xp: number) {
   return Math.max(1, Math.floor(Math.sqrt(Math.max(xp, 0) / 50)) + 1);
 }
+function xpForLevel(level: number) {
+  return 50 * Math.pow(Math.max(1, level) - 1, 2);
+}
+
 
 export const getPersonalizedDashboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
