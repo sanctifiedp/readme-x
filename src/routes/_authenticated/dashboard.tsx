@@ -349,12 +349,35 @@ function Dashboard() {
               value={`+${data?.todayXp ?? 0}`}
               sub={`Total ${profile?.xp ?? 0} XP`}
             />
-            <StatCard
-              icon={<Star className="h-4 w-4" />}
-              label="ReadMe Level"
-              value={profile?.readmeLevel ?? 1}
-              sub="Level up by earning XP"
-            />
+            <div className="rounded-xl border border-border bg-card p-4">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+                <Star className="h-4 w-4" />
+                <span>ReadMe Level</span>
+              </div>
+              <div className="mt-2 text-2xl font-bold">{profile?.readmeLevel ?? 1}</div>
+              {profile && (
+                <>
+                  <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full bg-primary"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          Math.max(
+                            0,
+                            ((profile.xp - profile.levelBaseXp) /
+                              Math.max(1, profile.nextLevelXp - profile.levelBaseXp)) * 100,
+                          ),
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-1">
+                    {Math.max(0, profile.nextLevelXp - profile.xp)} XP to level {profile.readmeLevel + 1}
+                  </div>
+                </>
+              )}
+            </div>
             <StatCard
               icon={<Flame className="h-4 w-4" />}
               label="Streak"
@@ -367,6 +390,7 @@ function Dashboard() {
               value={`#${data?.rank ?? "—"}`}
               sub="All-time XP"
             />
+
           </div>
         </section>
 
