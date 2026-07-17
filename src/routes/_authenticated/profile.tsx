@@ -1,13 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, Bookmark, Settings as SettingsIcon, Flame, Trophy, Loader2, Share2 } from "lucide-react";
+import { BookOpen, Bookmark, Settings as SettingsIcon, Flame, Trophy, Loader2, Share2, Award, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getMyProfile, listMyBookmarks } from "@/lib/account.functions";
+import { getMyBadges } from "@/lib/leaderboard.functions";
+
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
