@@ -16,6 +16,10 @@ type CourseRow = {
 function readmeLevel(xp: number) {
   return Math.max(1, Math.floor(Math.sqrt(Math.max(xp, 0) / 50)) + 1);
 }
+function xpForLevel(level: number) {
+  return 50 * Math.pow(Math.max(1, level) - 1, 2);
+}
+
 
 export const getPersonalizedDashboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -149,7 +153,10 @@ export const getPersonalizedDashboard = createServerFn({ method: "GET" })
         xp: profile.xp ?? 0,
         streak: profile.streak_count ?? 0,
         readmeLevel: readmeLevel(profile.xp ?? 0),
+        levelBaseXp: xpForLevel(readmeLevel(profile.xp ?? 0)),
+        nextLevelXp: xpForLevel(readmeLevel(profile.xp ?? 0) + 1),
       },
+
       isAdmin,
       unfinished,
       pinned: (pinnedRes.data ?? [])

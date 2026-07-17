@@ -1,12 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Loader2, Send, Sparkles, Timer } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Send, Sparkles, Timer, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/SiteHeader";
-import { getAttempt, submitAttempt } from "@/lib/exam.functions";
+import { getAttempt, submitAttempt, saveAnswer } from "@/lib/exam.functions";
 import { getHint } from "@/lib/practice.functions";
 
 export const Route = createFileRoute("/_authenticated/exam/$attemptId")({
@@ -24,6 +24,7 @@ function ExamPage() {
   const navigate = useNavigate();
   const fetchAttempt = useServerFn(getAttempt);
   const submitFn = useServerFn(submitAttempt);
+  const saveFn = useServerFn(saveAnswer);
   const hintFn = useServerFn(getHint);
 
   const { data, isLoading } = useQuery({
@@ -36,6 +37,20 @@ function ExamPage() {
   const [hints, setHints] = useState<Record<string, string>>({});
   const [hintLoading, setHintLoading] = useState<string | null>(null);
   const [remaining, setRemaining] = useState<number | null>(null);
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [savedFlash, setSavedFlash] = useState<string | null>(null);
+  const restoredRef = useRef(false);
+  const autoAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Hydrate initial state from server once
+  useEffect(() => {
+    if (!data || restoredRef.current) return;
+    restoredRef.current = true;
+    setAnswers(data.answers ?? {});
+    const total = data.questions.length;
+    const target = Math.min(Math.max(0, data.attempt.currentIndex ?? 0), Math.max(0, total - 1));
+    setIdx(target);
+  }, [data]);
 
   const submitMut = useMutation({
     mutationFn: () =>
@@ -48,15 +63,20 @@ function ExamPage() {
           })),
         },
       }),
-    onSuccess: () => navigate({ to: "/results/$attemptId", params: { attemptId } }),
+    onSuccess: (res) => {
+      if (res?.awardedXp) toast.success(`+${res.awardedXp} XP earned`);
+      if (res?.badges?.length) toast.success(`New badge: ${res.badges.join(", ")}`);
+      navigate({ to: "/results/$attemptId", params: { attemptId } });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   const submitNow = useCallback(() => {
     if (!submitMut.isPending) submitMut.mutate();
   }, [submitMut]);
 
-  // Initialise + tick timer
+  // Timer tick
   useEffect(() => {
     const exp = data?.attempt?.expiresAt ? new Date(data.attempt.expiresAt).getTime() : null;
     if (!exp) return;
@@ -69,6 +89,10 @@ function ExamPage() {
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [data?.attempt?.expiresAt, submitNow]);
+
+  useEffect(() => () => {
+    if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
+  }, []);
 
   const answeredCount = useMemo(() => Object.keys(answers).length, [answers]);
 
@@ -91,6 +115,63 @@ function ExamPage() {
   const q = data.questions[idx];
   if (!q) return null;
   const total = data.questions.length;
+  const isLast = idx === total - 1;
+
+  const persistCurrentIndex = (nextIndex: number) => {
+    // Fire-and-forget; server keeps last_activity_at + current_index
+    void saveFn({
+      data: {
+        attemptId,
+        questionId: q.id,
+        chosenIndex: answers[q.id] ?? -1,
+        currentIndex: nextIndex,
+      },
+    }).catch(() => { /* silent */ });
+  };
+
+  const goPrev = () => {
+    if (idx === 0) return;
+    const next = idx - 1;
+    setIdx(next);
+    persistCurrentIndex(next);
+  };
+  const goNext = () => {
+    if (idx >= total - 1) return;
+    const next = idx + 1;
+    setIdx(next);
+    persistCurrentIndex(next);
+  };
+  const jumpTo = (i: number) => {
+    setIdx(i);
+    persistCurrentIndex(i);
+  };
+
+  const handleSelect = (chosenIndex: number) => {
+    setAnswers((a) => ({ ...a, [q.id]: chosenIndex }));
+    setSavingId(q.id);
+    // Persist and auto-advance
+    const currentIndex = idx;
+    void saveFn({
+      data: { attemptId, questionId: q.id, chosenIndex, currentIndex },
+    })
+      .then(() => {
+        setSavedFlash(q.id);
+        setTimeout(() => setSavedFlash((v) => (v === q.id ? null : v)), 900);
+      })
+      .catch((e) => toast.error((e as Error).message))
+      .finally(() => setSavingId((v) => (v === q.id ? null : v)));
+
+    if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
+    if (!isLast) {
+      autoAdvanceTimer.current = setTimeout(() => {
+        setIdx((cur) => {
+          const next = Math.min(total - 1, cur + 1);
+          if (next !== cur) persistCurrentIndex(next);
+          return next;
+        });
+      }, 400);
+    }
+  };
 
   const loadHint = async () => {
     if (hints[q.id]) return;
@@ -133,7 +214,7 @@ function ExamPage() {
           {data.questions.map((qq, i) => (
             <button
               key={qq.id}
-              onClick={() => setIdx(i)}
+              onClick={() => jumpTo(i)}
               className={`h-7 w-7 text-xs rounded-md border transition ${
                 i === idx
                   ? "bg-primary text-primary-foreground border-primary"
@@ -148,8 +229,17 @@ function ExamPage() {
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-6">
-          <div className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">
-            Question {idx + 1} of {total}
+          <div className="flex items-center justify-between">
+            <div className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">
+              Question {idx + 1} of {total}
+            </div>
+            <div className="text-xs text-muted-foreground h-4 flex items-center gap-1">
+              {savingId === q.id ? (
+                <><Loader2 className="h-3 w-3 animate-spin" /> Saving…</>
+              ) : savedFlash === q.id ? (
+                <><Check className="h-3 w-3 text-success" /> Saved</>
+              ) : null}
+            </div>
           </div>
           <p className="mt-2 text-lg font-medium leading-relaxed">{q.prompt}</p>
 
@@ -159,7 +249,7 @@ function ExamPage() {
               return (
                 <button
                   key={i}
-                  onClick={() => setAnswers((a) => ({ ...a, [q.id]: i }))}
+                  onClick={() => handleSelect(i)}
                   className={`w-full text-left px-4 py-3 rounded-lg border transition ${
                     selected
                       ? "border-primary bg-primary/10"
@@ -193,25 +283,25 @@ function ExamPage() {
         </div>
 
         <div className="mt-6 flex items-center justify-between gap-3">
-          <Button variant="outline" onClick={() => setIdx((i) => Math.max(0, i - 1))} disabled={idx === 0}>
+          <Button variant="outline" onClick={goPrev} disabled={idx === 0}>
             <ChevronLeft className="h-4 w-4 mr-1" /> Previous
           </Button>
-          {idx < total - 1 ? (
-            <Button onClick={() => setIdx((i) => Math.min(total - 1, i + 1))}>
+          {!isLast ? (
+            <Button onClick={goNext}>
               Next <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           ) : (
             <Button
               onClick={() => {
                 if (answeredCount < total) {
-                  if (!confirm(`You've answered ${answeredCount} of ${total}. Submit anyway?`)) return;
+                  if (!confirm(`You've answered ${answeredCount} of ${total}. Finish exam anyway?`)) return;
                 }
                 submitNow();
               }}
               disabled={submitMut.isPending}
             >
               {submitMut.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
-              Submit exam
+              Finish exam
             </Button>
           )}
         </div>

@@ -1,13 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, Bookmark, Settings as SettingsIcon, Flame, Trophy, Loader2, Share2 } from "lucide-react";
+import { BookOpen, Bookmark, Settings as SettingsIcon, Flame, Trophy, Loader2, Share2, Award, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getMyProfile, listMyBookmarks } from "@/lib/account.functions";
+import { getMyBadges } from "@/lib/leaderboard.functions";
+
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
@@ -27,6 +29,7 @@ function initials(name?: string | null) {
 function ProfilePage() {
   const fetchProfile = useServerFn(getMyProfile);
   const fetchBookmarks = useServerFn(listMyBookmarks);
+  const fetchBadges = useServerFn(getMyBadges);
   const { data: profile, isLoading } = useQuery({
     queryKey: ["my-profile"],
     queryFn: () => fetchProfile(),
@@ -35,6 +38,11 @@ function ProfilePage() {
     queryKey: ["my-bookmarks"],
     queryFn: () => fetchBookmarks(),
   });
+  const { data: badges } = useQuery({
+    queryKey: ["my-badges"],
+    queryFn: () => fetchBadges(),
+  });
+
 
   const copyLink = () => {
     if (!profile?.username) return;
@@ -96,6 +104,40 @@ function ProfilePage() {
                 <div className="mt-1 text-2xl font-bold">{bookmarks?.length ?? 0}</div>
               </div>
             </section>
+
+            <section className="rounded-2xl border border-border bg-card p-6">
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Award className="h-5 w-5" /> Badges</h2>
+              {!badges || (badges.earned.length === 0 && badges.locked.length === 0) ? (
+                <p className="text-sm text-muted-foreground">Loading badges…</p>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {badges.earned.map((b) => (
+                    <div key={b.code} className="flex items-start gap-3 rounded-lg border border-primary/40 bg-primary/5 p-3">
+                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 text-primary shrink-0">
+                        <Award className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="font-semibold text-sm truncate">{b.name}</div>
+                        <div className="text-xs text-muted-foreground">{b.description}</div>
+                      </div>
+                    </div>
+                  ))}
+                  {badges.locked.map((b) => (
+                    <div key={b.code} className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3 opacity-70">
+                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground shrink-0">
+                        <Lock className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="font-semibold text-sm truncate">{b.name}</div>
+                        <div className="text-xs text-muted-foreground">{b.description}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+
 
             <section className="rounded-2xl border border-border bg-card p-6">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Bookmark className="h-5 w-5" /> Saved courses</h2>
