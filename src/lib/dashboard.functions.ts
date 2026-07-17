@@ -153,7 +153,10 @@ export const getPersonalizedDashboard = createServerFn({ method: "GET" })
         xp: profile.xp ?? 0,
         streak: profile.streak_count ?? 0,
         readmeLevel: readmeLevel(profile.xp ?? 0),
+        levelBaseXp: xpForLevel(readmeLevel(profile.xp ?? 0)),
+        nextLevelXp: xpForLevel(readmeLevel(profile.xp ?? 0) + 1),
       },
+
       isAdmin,
       unfinished,
       pinned: (pinnedRes.data ?? [])
