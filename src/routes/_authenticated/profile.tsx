@@ -106,6 +106,40 @@ function ProfilePage() {
             </section>
 
             <section className="rounded-2xl border border-border bg-card p-6">
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Award className="h-5 w-5" /> Badges</h2>
+              {!badges || (badges.earned.length === 0 && badges.locked.length === 0) ? (
+                <p className="text-sm text-muted-foreground">Loading badges…</p>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {badges.earned.map((b) => (
+                    <div key={b.code} className="flex items-start gap-3 rounded-lg border border-primary/40 bg-primary/5 p-3">
+                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 text-primary shrink-0">
+                        <Award className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="font-semibold text-sm truncate">{b.name}</div>
+                        <div className="text-xs text-muted-foreground">{b.description}</div>
+                      </div>
+                    </div>
+                  ))}
+                  {badges.locked.map((b) => (
+                    <div key={b.code} className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3 opacity-70">
+                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground shrink-0">
+                        <Lock className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="font-semibold text-sm truncate">{b.name}</div>
+                        <div className="text-xs text-muted-foreground">{b.description}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+
+
+            <section className="rounded-2xl border border-border bg-card p-6">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Bookmark className="h-5 w-5" /> Saved courses</h2>
               {!bookmarks || bookmarks.length === 0 ? (
                 <p className="text-sm text-muted-foreground">You haven't saved any courses yet. Tap the star on any course to save it.</p>
