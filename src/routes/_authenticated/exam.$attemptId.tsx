@@ -63,9 +63,14 @@ function ExamPage() {
           })),
         },
       }),
-    onSuccess: () => navigate({ to: "/results/$attemptId", params: { attemptId } }),
+    onSuccess: (res) => {
+      if (res?.awardedXp) toast.success(`+${res.awardedXp} XP earned`);
+      if (res?.badges?.length) toast.success(`New badge: ${res.badges.join(", ")}`);
+      navigate({ to: "/results/$attemptId", params: { attemptId } });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   const submitNow = useCallback(() => {
     if (!submitMut.isPending) submitMut.mutate();
