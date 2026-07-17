@@ -167,7 +167,9 @@ export function SiteHeader() {
           {user && (
             <>
               <Link to="/dashboard" onClick={() => setOpen(false)} className="py-2 text-sm">Dashboard</Link>
+              <Link to="/leaderboard" onClick={() => setOpen(false)} className="py-2 text-sm">Leaderboard</Link>
               <Link to="/friends" onClick={() => setOpen(false)} className="py-2 text-sm">Friends</Link>
+
               <Link to="/challenges" search={{}} onClick={() => setOpen(false)} className="py-2 text-sm">Challenges</Link>
               <Link to="/chat" onClick={() => setOpen(false)} className="py-2 text-sm">Chat</Link>
               <Link to="/profile" onClick={() => setOpen(false)} className="py-2 text-sm">Profile</Link>
