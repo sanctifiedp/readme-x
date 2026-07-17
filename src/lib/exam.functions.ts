@@ -242,7 +242,7 @@ export const submitAttempt = createServerFn({ method: "POST" })
 
     // XP awards
     let awardedXp = 0;
-    const courseId = attempt.course_id ?? null;
+    const courseId: string | undefined = attempt.course_id ?? undefined;
     if (score > 0) {
       const amt = score * 2;
       await supabaseAdmin.rpc("award_xp", { _user_id: userId, _kind: "correct_answer", _amount: amt, _course_id: courseId });
@@ -267,9 +267,10 @@ export const submitAttempt = createServerFn({ method: "POST" })
 
     // Weekly streak bonus (every 7 days)
     if (streak > 0 && streak % 7 === 0) {
-      await supabaseAdmin.rpc("award_xp", { _user_id: userId, _kind: "weekly_streak", _amount: 10, _course_id: null });
+      await supabaseAdmin.rpc("award_xp", { _user_id: userId, _kind: "weekly_streak", _amount: 10 });
       awardedXp += 10;
     }
+
 
     const { count: examsCompletedCount } = await supabaseAdmin
       .from("exam_attempts")
