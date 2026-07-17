@@ -29,6 +29,7 @@ function initials(name?: string | null) {
 function ProfilePage() {
   const fetchProfile = useServerFn(getMyProfile);
   const fetchBookmarks = useServerFn(listMyBookmarks);
+  const fetchBadges = useServerFn(getMyBadges);
   const { data: profile, isLoading } = useQuery({
     queryKey: ["my-profile"],
     queryFn: () => fetchProfile(),
@@ -37,6 +38,11 @@ function ProfilePage() {
     queryKey: ["my-bookmarks"],
     queryFn: () => fetchBookmarks(),
   });
+  const { data: badges } = useQuery({
+    queryKey: ["my-badges"],
+    queryFn: () => fetchBadges(),
+  });
+
 
   const copyLink = () => {
     if (!profile?.username) return;
