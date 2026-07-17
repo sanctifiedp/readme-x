@@ -77,10 +77,12 @@ export function SiteHeader() {
           {user && (
             <>
               <Link to="/dashboard" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Dashboard</Link>
+              <Link to="/leaderboard" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Leaderboard</Link>
               <Link to="/friends" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Friends</Link>
               <Link to="/challenges" search={{}} className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Challenges</Link>
               <Link to="/chat" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Chat</Link>
             </>
+
           )}
         </nav>
 
