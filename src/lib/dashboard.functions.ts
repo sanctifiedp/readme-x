@@ -96,22 +96,47 @@ export const getPersonalizedDashboard = createServerFn({ method: "GET" })
       .gt("xp", profile.xp ?? 0);
     const rank = (higher ?? 0) + 1;
 
-    // Weakest subject from finished attempts: avg percentage per course, pick lowest with >=2 attempts
-    const perCourse = new Map<string, { code: string; title: string; sum: number; count: number }>();
+    // Per-course averages for weakest/strongest subjects
+    const perCourse = new Map<string, { id: string; code: string; title: string; sum: number; count: number }>();
     for (const a of attemptsRes.data ?? []) {
       if (!a.course_id || !a.total || a.score == null) continue;
       const key = a.course_id;
-      const existing = perCourse.get(key) ?? { code: a.courses?.code ?? "", title: a.courses?.title ?? "", sum: 0, count: 0 };
+      const existing = perCourse.get(key) ?? { id: a.course_id, code: a.courses?.code ?? "", title: a.courses?.title ?? "", sum: 0, count: 0 };
       existing.sum += (a.score / a.total) * 100;
       existing.count += 1;
       perCourse.set(key, existing);
     }
-    let weakest: { code: string; title: string; average: number } | null = null;
+    let weakest: { id: string; code: string; title: string; average: number } | null = null;
+    let strongest: { id: string; code: string; title: string; average: number } | null = null;
     for (const v of perCourse.values()) {
       if (v.count < 2) continue;
       const avg = v.sum / v.count;
-      if (!weakest || avg < weakest.average) weakest = { code: v.code, title: v.title, average: Math.round(avg) };
+      if (!weakest || avg < weakest.average) weakest = { id: v.id, code: v.code, title: v.title, average: Math.round(avg) };
+      if (!strongest || avg > strongest.average) strongest = { id: v.id, code: v.code, title: v.title, average: Math.round(avg) };
     }
+
+    // Recent performance: last finished attempt, trend vs prior
+    const finished = attemptsRes.data ?? [];
+    const last = finished[0];
+    const prior = finished[1];
+    const pct = (s: number | null | undefined, t: number | null | undefined) =>
+      s == null || !t ? null : Math.round((s / t) * 100);
+    const recent = last
+      ? {
+          code: last.courses?.code ?? "",
+          title: last.courses?.title ?? "",
+          score: last.score ?? 0,
+          total: last.total ?? 0,
+          accuracy: pct(last.score, last.total) ?? 0,
+          delta:
+            prior && pct(last.score, last.total) != null && pct(prior.score, prior.total) != null
+              ? (pct(last.score, last.total) as number) - (pct(prior.score, prior.total) as number)
+              : null,
+          submittedAt: last.submitted_at,
+        }
+      : null;
+    const totalAttempts = finished.length;
+    const totalQuestions = finished.reduce((s, a) => s + (a.total ?? 0), 0);
 
     const unfinishedRaw = unfinishedRes.data?.[0];
     const now = Date.now();
