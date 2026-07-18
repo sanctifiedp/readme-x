@@ -196,6 +196,10 @@ export const getPersonalizedDashboard = createServerFn({ method: "GET" })
       todayXp,
       rank,
       weakest,
+      strongest,
+      recent,
+      totalAttempts,
+      totalQuestions,
     };
   });
 
