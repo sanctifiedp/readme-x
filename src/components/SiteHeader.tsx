@@ -1,6 +1,27 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BookOpen, Moon, Sun, LogOut, Heart, MessageCircle, Menu, X, MessageSquareText, UserCircle, Settings, ChevronDown } from "lucide-react";
+import {
+  BookOpen,
+  Moon,
+  Sun,
+  LogOut,
+  Heart,
+  MessageCircle,
+  Menu,
+  MessageSquareText,
+  UserCircle,
+  Settings,
+  ChevronDown,
+  Home,
+  GraduationCap,
+  Trophy,
+  Users,
+  Swords,
+  StickyNote,
+  MessagesSquare,
+  Sparkles,
+  LayoutDashboard,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -11,6 +32,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { initTheme, toggleTheme, isDark } from "@/lib/theme";
 
@@ -25,11 +53,27 @@ function initials(name?: string | null, fallback?: string | null) {
   return source.split(" ").filter(Boolean).slice(0, 2).map((s) => s[0]?.toUpperCase()).join("");
 }
 
+const PRIMARY_LINKS = [
+  { to: "/", label: "Home", icon: Home, auth: false },
+  { to: "/courses", label: "Practice", icon: GraduationCap, auth: false },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, auth: true },
+  { to: "/leaderboard", label: "Leaderboard", icon: Trophy, auth: true },
+] as const;
+
+const MORE_LINKS = [
+  { to: "/tournaments", label: "Tournaments", icon: Sparkles, auth: false, search: undefined },
+  { to: "/notes", label: "Notes", icon: StickyNote, auth: false, search: undefined },
+  { to: "/challenges", label: "Challenges", icon: Swords, auth: true, search: {} as Record<string, never> },
+  { to: "/friends", label: "Friends", icon: Users, auth: true, search: undefined },
+  { to: "/chat", label: "Chat", icon: MessagesSquare, auth: true, search: undefined },
+  { to: "/donate", label: "Donate", icon: Heart, auth: false, search: undefined },
+] as const;
+
 export function SiteHeader() {
   const [user, setUser] = useState<{ id: string; email?: string | null } | null>(null);
   const [profile, setProfile] = useState<MiniProfile | null>(null);
   const [dark, setDark] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -53,46 +97,80 @@ export function SiteHeader() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    setDrawerOpen(false);
     navigate({ to: "/" });
   };
 
-  const displayName = profile?.full_name || (profile?.username ? `@${profile.username}` : user?.email?.split("@")[0]) || "You";
+  const displayName =
+    profile?.full_name ||
+    (profile?.username ? `@${profile.username}` : user?.email?.split("@")[0]) ||
+    "You";
+
+  const primary = PRIMARY_LINKS.filter((l) => !l.auth || user);
+  const more = MORE_LINKS.filter((l) => !l.auth || user);
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-2 font-bold text-lg">
+      <div className="container mx-auto flex h-16 items-center justify-between gap-2 px-4">
+        <Link to="/" className="flex items-center gap-2 font-bold text-lg shrink-0">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
             <BookOpen className="h-5 w-5" />
           </span>
           <span className="tracking-tight">ReadMe</span>
         </Link>
 
+        {/* Desktop primary nav */}
         <nav className="hidden md:flex items-center gap-1">
-          <Link to="/" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Home</Link>
-          <Link to="/courses" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Practice</Link>
-          <Link to="/tournaments" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Tournaments</Link>
-          <Link to="/notes" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Notes</Link>
-          <Link to="/donate" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Donate</Link>
-          {user && (
-            <>
-              <Link to="/dashboard" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Dashboard</Link>
-              <Link to="/leaderboard" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Leaderboard</Link>
-              <Link to="/friends" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Friends</Link>
-              <Link to="/challenges" search={{}} className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Challenges</Link>
-              <Link to="/chat" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Chat</Link>
-            </>
-
+          {primary.map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
+              activeProps={{ className: "text-foreground bg-accent" }}
+              inactiveProps={{ className: "text-muted-foreground hover:text-foreground" }}
+              activeOptions={{ exact: l.to === "/" }}
+              className="px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              {l.label}
+            </Link>
+          ))}
+          {more.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors">
+                  More <ChevronDown className="h-3.5 w-3.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                {more.map((l) => {
+                  const Icon = l.icon;
+                  return (
+                    <DropdownMenuItem asChild key={l.to}>
+                      {l.search !== undefined ? (
+                        <Link to={l.to} search={l.search as never} className="cursor-pointer">
+                          <Icon className="h-4 w-4 mr-2" /> {l.label}
+                        </Link>
+                      ) : (
+                        <Link to={l.to} className="cursor-pointer">
+                          <Icon className="h-4 w-4 mr-2" /> {l.label}
+                        </Link>
+                      )}
+                    </DropdownMenuItem>
+                  );
+                })}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <a href={FEEDBACK_URL} target="_blank" rel="noreferrer" className="cursor-pointer">
+                    <MessageSquareText className="h-4 w-4 mr-2" /> Feedback
+                  </a>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </nav>
 
-        <div className="flex items-center gap-2">
-          <a href={FEEDBACK_URL} target="_blank" rel="noreferrer" className="hidden lg:inline-flex">
-            <Button variant="ghost" size="sm" className="gap-1.5">
-              <MessageSquareText className="h-4 w-4" /> Feedback
-            </Button>
-          </a>
-          <a href={WA_URL} target="_blank" rel="noreferrer" className="hidden sm:inline-flex">
+        {/* Right side controls */}
+        <div className="flex items-center gap-1.5">
+          <a href={WA_URL} target="_blank" rel="noreferrer" className="hidden lg:inline-flex">
             <Button variant="default" size="sm" className="gap-1.5">
               <MessageCircle className="h-4 w-4" /> WhatsApp
             </Button>
@@ -102,6 +180,7 @@ export function SiteHeader() {
             size="icon"
             onClick={() => { toggleTheme(); setDark(isDark()); }}
             aria-label="Toggle theme"
+            className="min-h-10 min-w-10"
           >
             {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
@@ -109,13 +188,16 @@ export function SiteHeader() {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="hidden sm:inline-flex items-center gap-2 rounded-full border border-border/60 pl-1 pr-2 py-1 hover:bg-accent transition" aria-label="Account menu">
+                <button
+                  className="inline-flex items-center gap-2 rounded-full border border-border/60 pl-1 pr-1.5 sm:pr-2 py-1 hover:bg-accent transition min-h-10"
+                  aria-label="Account menu"
+                >
                   <Avatar className="h-7 w-7">
                     <AvatarImage src={profile?.avatar_url ?? undefined} alt={displayName} />
                     <AvatarFallback className="text-xs">{initials(profile?.full_name, user.email)}</AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium max-w-[120px] truncate">{displayName}</span>
-                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm font-medium max-w-[110px] truncate hidden sm:inline">{displayName}</span>
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground hidden sm:inline" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -152,38 +234,123 @@ export function SiteHeader() {
             </Link>
           )}
 
-          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setOpen(!open)} aria-label="Menu">
-            {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-          </Button>
+          {/* Mobile hamburger */}
+          <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden min-h-10 min-w-10" aria-label="Open menu">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[85%] max-w-sm p-0 flex flex-col">
+              <SheetHeader className="px-5 py-4 border-b border-border/60">
+                <SheetTitle className="flex items-center gap-2 text-left">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                    <BookOpen className="h-4 w-4" />
+                  </span>
+                  ReadMe
+                </SheetTitle>
+              </SheetHeader>
+              <div className="flex-1 overflow-y-auto py-2">
+                <div className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Main</div>
+                {primary.map((l) => {
+                  const Icon = l.icon;
+                  return (
+                    <Link
+                      key={l.to}
+                      to={l.to}
+                      onClick={() => setDrawerOpen(false)}
+                      activeProps={{ className: "bg-accent text-foreground" }}
+                      inactiveProps={{ className: "text-muted-foreground hover:bg-accent/60 hover:text-foreground" }}
+                      activeOptions={{ exact: l.to === "/" }}
+                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md mx-2 my-0.5 transition-colors"
+                    >
+                      <Icon className="h-4 w-4" /> {l.label}
+                    </Link>
+                  );
+                })}
+                {more.length > 0 && (
+                  <>
+                    <div className="px-2 pt-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">More</div>
+                    {more.map((l) => {
+                      const Icon = l.icon;
+                      const shared = {
+                        onClick: () => setDrawerOpen(false),
+                        className:
+                          "flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md mx-2 my-0.5 text-muted-foreground hover:bg-accent/60 hover:text-foreground transition-colors",
+                      };
+                      return l.search !== undefined ? (
+                        <Link key={l.to} to={l.to} search={l.search as never} {...shared}>
+                          <Icon className="h-4 w-4" /> {l.label}
+                        </Link>
+                      ) : (
+                        <Link key={l.to} to={l.to} {...shared}>
+                          <Icon className="h-4 w-4" /> {l.label}
+                        </Link>
+                      );
+                    })}
+                  </>
+                )}
+                <div className="px-2 pt-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Support</div>
+                <a
+                  href={FEEDBACK_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => setDrawerOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md mx-2 my-0.5 text-muted-foreground hover:bg-accent/60 hover:text-foreground transition-colors"
+                >
+                  <MessageSquareText className="h-4 w-4" /> Feedback
+                </a>
+                <a
+                  href={WA_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => setDrawerOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md mx-2 my-0.5 text-muted-foreground hover:bg-accent/60 hover:text-foreground transition-colors"
+                >
+                  <MessageCircle className="h-4 w-4" /> WhatsApp
+                </a>
+              </div>
+              <div className="border-t border-border/60 p-4">
+                {user ? (
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-9 w-9">
+                      <AvatarImage src={profile?.avatar_url ?? undefined} alt={displayName} />
+                      <AvatarFallback className="text-xs">{initials(profile?.full_name, user.email)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate">{displayName}</div>
+                      {profile?.username && (
+                        <div className="text-xs text-muted-foreground truncate">@{profile.username}</div>
+                      )}
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm">Account</Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link to="/profile" onClick={() => setDrawerOpen(false)}><UserCircle className="h-4 w-4 mr-2" /> Profile</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/settings" onClick={() => setDrawerOpen(false)}><Settings className="h-4 w-4 mr-2" /> Settings</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={handleSignOut}>
+                          <LogOut className="h-4 w-4 mr-2" /> Sign out
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                ) : (
+                  <Link to="/auth" onClick={() => setDrawerOpen(false)} className="block">
+                    <Button className="w-full">Sign in</Button>
+                  </Link>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
-      {open && (
-        <nav className="md:hidden border-t border-border/60 bg-background px-4 py-2 flex flex-col">
-          <Link to="/" onClick={() => setOpen(false)} className="py-2 text-sm">Home</Link>
-          <Link to="/courses" onClick={() => setOpen(false)} className="py-2 text-sm">Practice</Link>
-          <Link to="/tournaments" onClick={() => setOpen(false)} className="py-2 text-sm">Tournaments</Link>
-          <Link to="/notes" onClick={() => setOpen(false)} className="py-2 text-sm">Notes</Link>
-          <Link to="/donate" onClick={() => setOpen(false)} className="py-2 text-sm">Donate</Link>
-          {user && (
-            <>
-              <Link to="/dashboard" onClick={() => setOpen(false)} className="py-2 text-sm">Dashboard</Link>
-              <Link to="/leaderboard" onClick={() => setOpen(false)} className="py-2 text-sm">Leaderboard</Link>
-              <Link to="/friends" onClick={() => setOpen(false)} className="py-2 text-sm">Friends</Link>
-
-              <Link to="/challenges" search={{}} onClick={() => setOpen(false)} className="py-2 text-sm">Challenges</Link>
-              <Link to="/chat" onClick={() => setOpen(false)} className="py-2 text-sm">Chat</Link>
-              <Link to="/profile" onClick={() => setOpen(false)} className="py-2 text-sm">Profile</Link>
-              <Link to="/settings" onClick={() => setOpen(false)} className="py-2 text-sm">Settings</Link>
-            </>
-          )}
-          <a href={FEEDBACK_URL} target="_blank" rel="noreferrer" className="py-2 text-sm">Give feedback</a>
-          {user ? (
-            <button onClick={handleSignOut} className="py-2 text-sm text-left">Sign out</button>
-          ) : (
-            <Link to="/auth" onClick={() => setOpen(false)} className="py-2 text-sm">Sign in</Link>
-          )}
-        </nav>
-      )}
     </header>
   );
 }

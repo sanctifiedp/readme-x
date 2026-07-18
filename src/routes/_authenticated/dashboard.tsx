@@ -394,31 +394,91 @@ function Dashboard() {
           </div>
         </section>
 
-        {/* Weakest subject */}
+        {/* Performance insights */}
         <section>
-          <div className="rounded-xl border border-border bg-card p-5 flex items-start gap-3">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10 text-destructive shrink-0">
-              <Target className="h-5 w-5" />
-            </span>
-            <div className="flex-1 min-w-0">
-              <div className="text-xs uppercase tracking-wide text-muted-foreground">Weakest subject</div>
+          <h2 className="text-xl font-semibold mb-4">Performance insights</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* Weakest */}
+            <div className="rounded-xl border border-border bg-card p-5 flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-destructive/10 text-destructive shrink-0">
+                  <Target className="h-4 w-4" />
+                </span>
+                <div className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Weakest subject</div>
+              </div>
               {data?.weakest ? (
                 <>
-                  <div className="font-semibold">
-                    {data.weakest.code} — {data.weakest.title}
+                  <div>
+                    <div className="font-mono text-xs text-muted-foreground">{data.weakest.code}</div>
+                    <div className="font-semibold truncate">{data.weakest.title}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">Avg score {data.weakest.average}%</div>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    Averaging {data.weakest.average}% — try more practice here.
-                  </div>
+                  <Link to="/courses/$code" params={{ code: data.weakest.code }} className="mt-auto">
+                    <Button size="sm" variant="outline" className="w-full">Practice now</Button>
+                  </Link>
                 </>
               ) : (
-                <div className="text-sm text-muted-foreground">
-                  Complete a few exams and we'll surface the subject that needs the most attention.
+                <div className="text-sm text-muted-foreground">Complete a few exams to see the subject that needs the most attention.</div>
+              )}
+            </div>
+
+            {/* Strongest */}
+            <div className="rounded-xl border border-border bg-card p-5 flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500 shrink-0">
+                  <Star className="h-4 w-4" />
+                </span>
+                <div className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Strongest subject</div>
+              </div>
+              {data?.strongest ? (
+                <>
+                  <div>
+                    <div className="font-mono text-xs text-muted-foreground">{data.strongest.code}</div>
+                    <div className="font-semibold truncate">{data.strongest.title}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">Avg score {data.strongest.average}%</div>
+                  </div>
+                  <Link to="/courses/$code" params={{ code: data.strongest.code }} className="mt-auto">
+                    <Button size="sm" variant="outline" className="w-full">Keep going</Button>
+                  </Link>
+                </>
+              ) : (
+                <div className="text-sm text-muted-foreground">Take a few exams to reveal your strongest area.</div>
+              )}
+            </div>
+
+            {/* Recent performance */}
+            <div className="rounded-xl border border-border bg-card p-5 flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
+                  <Sparkles className="h-4 w-4" />
+                </span>
+                <div className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Recent performance</div>
+              </div>
+              {data?.recent ? (
+                <div className="space-y-1.5">
+                  <div>
+                    <div className="font-mono text-xs text-muted-foreground">{data.recent.code}</div>
+                    <div className="font-semibold truncate">{data.recent.title}</div>
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold">{data.recent.accuracy}%</span>
+                    {data.recent.delta != null && (
+                      <span className={`text-xs font-medium ${data.recent.delta >= 0 ? "text-emerald-500" : "text-destructive"}`}>
+                        {data.recent.delta >= 0 ? "▲" : "▼"} {Math.abs(data.recent.delta)}%
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {data.recent.score}/{data.recent.total} correct · {data.totalAttempts ?? 0} exams · {data.totalQuestions ?? 0} questions answered
+                  </div>
                 </div>
+              ) : (
+                <div className="text-sm text-muted-foreground">Your last exam will appear here with score, accuracy and improvement.</div>
               )}
             </div>
           </div>
         </section>
+
 
         {/* My Courses (pinned + extras) */}
         <section>
