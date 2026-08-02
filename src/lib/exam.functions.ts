@@ -237,6 +237,14 @@ export const submitAttempt = createServerFn({ method: "POST" })
       .update({ submitted_at: new Date().toISOString(), score })
       .eq("id", data.attemptId);
 
+    // Rewards (XP, streaks, badges) require a verified email account.
+    const { isEmailVerified } = await import("./verify.server");
+    const verified = await isEmailVerified(userId);
+    const pct = total > 0 ? score / total : 0;
+    if (!verified) {
+      return { score, total, awardedXp: 0, badges: [] as string[], rewardsLocked: true };
+    }
+
     // Streak
     await supabaseAdmin.rpc("bump_streak", { _user_id: userId });
 
@@ -250,7 +258,6 @@ export const submitAttempt = createServerFn({ method: "POST" })
     }
     await supabaseAdmin.rpc("award_xp", { _user_id: userId, _kind: "exam_complete", _amount: 5, _course_id: courseId });
     awardedXp += 5;
-    const pct = total > 0 ? score / total : 0;
     if (pct >= 0.8 && pct < 1) {
       await supabaseAdmin.rpc("award_xp", { _user_id: userId, _kind: "high_score", _amount: 5, _course_id: courseId });
       awardedXp += 5;
@@ -284,7 +291,8 @@ export const submitAttempt = createServerFn({ method: "POST" })
       streak,
     });
 
-    return { score, total, awardedXp, badges: newBadges };
+    return { score, total, awardedXp, badges: newBadges, rewardsLocked: false };
+
   });
 
 export const getResults = createServerFn({ method: "POST" })

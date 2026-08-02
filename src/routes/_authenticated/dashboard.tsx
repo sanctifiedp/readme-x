@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BookOpen,
   ChevronRight,
@@ -50,6 +50,9 @@ import {
   unpinCourse,
 } from "@/lib/dashboard.functions";
 import { getRandomQuote } from "@/lib/quotes.functions";
+import { useSessionUser } from "@/hooks/useSessionUser";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -229,6 +232,27 @@ function AddCourseDialog({
 
 function Dashboard() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
+  const session = useSessionUser();
+
+  // Existing-user migration: nudge anyone missing profile essentials to onboarding.
+  useEffect(() => {
+    if (!session.userId) return;
+    let alive = true;
+    supabase
+      .from("profiles")
+      .select("username, school, department, level")
+      .eq("id", session.userId)
+      .maybeSingle()
+      .then(({ data: p }) => {
+        if (!alive || !p) return;
+        if (!p.username || !p.school || !p.department || !p.level) {
+          navigate({ to: "/onboarding" });
+        }
+      });
+    return () => { alive = false; };
+  }, [session.userId, navigate]);
+
   const fetchDash = useServerFn(getPersonalizedDashboard);
   const fetchQuote = useServerFn(getRandomQuote);
   const pinFn = useServerFn(pinCourse);

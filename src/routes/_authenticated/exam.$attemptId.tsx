@@ -64,6 +64,9 @@ function ExamPage() {
         },
       }),
     onSuccess: (res) => {
+      if ("rewardsLocked" in (res ?? {}) && (res as { rewardsLocked?: boolean }).rewardsLocked) {
+        toast.info("Verify your email to start earning XP and badges.");
+      }
       if (res?.awardedXp) toast.success(`+${res.awardedXp} XP earned`);
       if (res?.badges?.length) toast.success(`New badge: ${res.badges.join(", ")}`);
       navigate({ to: "/results/$attemptId", params: { attemptId } });

@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { initTheme, toggleTheme, isDark } from "@/lib/theme";
+import { VerifyEmailBanner } from "@/components/VerifyEmailBanner";
 
 const WA_URL = "https://wa.me/2349064887865";
 export const FEEDBACK_URL =
@@ -351,6 +352,7 @@ export function SiteHeader() {
           </Sheet>
         </div>
       </div>
+      <VerifyEmailBanner />
     </header>
   );
 }

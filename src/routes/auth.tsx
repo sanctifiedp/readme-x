@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { SchoolDepartmentPicker } from "@/components/SchoolDepartmentPicker";
+import { checkUsernamePublic } from "@/lib/guest.functions";
+
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -23,14 +24,38 @@ function AuthPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<"signin" | "signup">("signin");
-  const [suSchool, setSuSchool] = useState("");
-  const [suDept, setSuDept] = useState("");
+  const [username, setUsername] = useState("");
+  const [unameState, setUnameState] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/dashboard" });
     });
   }, [navigate]);
+
+  // Live username availability
+  useEffect(() => {
+    const uname = username.trim().toLowerCase();
+    if (!uname) { setUnameState(null); return; }
+    if (!/^[a-z0-9_]{3,20}$/.test(uname)) {
+      setUnameState({ ok: false, msg: "3–20 characters: letters, numbers or underscores." });
+      return;
+    }
+    let alive = true;
+    setChecking(true);
+    const t = setTimeout(async () => {
+      try {
+        const res = await checkUsernamePublic({ data: { username: uname } });
+        if (alive) setUnameState({ ok: res.available, msg: res.available ? "Available" : (res.reason ?? "Taken") });
+      } catch {
+        if (alive) setUnameState(null);
+      } finally {
+        if (alive) setChecking(false);
+      }
+    }, 400);
+    return () => { alive = false; clearTimeout(t); setChecking(false); };
+  }, [username]);
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -51,38 +76,52 @@ function AuthPage() {
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
     const fd = new FormData(e.currentTarget);
+    const uname = username.trim().toLowerCase();
+    if (!/^[a-z0-9_]{3,20}$/.test(uname)) {
+      toast.error("Pick a username with 3–20 letters, numbers or underscores.");
+      return;
+    }
+    if (unameState && !unameState.ok) {
+      toast.error(unameState.msg);
+      return;
+    }
+    setLoading(true);
+    // Final server-side uniqueness check right before signup
+    try {
+      const check = await checkUsernamePublic({ data: { username: uname } });
+      if (!check.available) {
+        setLoading(false);
+        setUnameState({ ok: false, msg: check.reason ?? "That username is taken." });
+        toast.error(check.reason ?? "That username is taken.");
+        return;
+      }
+    } catch {
+      /* fall through — the trigger keeps usernames unique */
+    }
+
     const email = String(fd.get("email"));
     const password = String(fd.get("password"));
-    const full_name = String(fd.get("full_name"));
-    const matric_no = String(fd.get("matric_no"));
-    const school = String(fd.get("school") ?? "");
-    const department = String(fd.get("department") ?? "");
-    const level = String(fd.get("level") ?? "");
+    const full_name = String(fd.get("full_name")).trim();
 
-    const { data: signUpData, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
-        data: { full_name, matric_no, school, department, level },
+        emailRedirectTo: `${window.location.origin}/onboarding`,
+        data: { full_name, username: uname },
       },
     });
 
+    setLoading(false);
     if (error) {
-      setLoading(false);
       toast.error(error.message);
       return;
     }
-    // Best-effort: write school/department/level to profile if a session exists
-    if (signUpData.session) {
-      await supabase.from("profiles").update({ school, department, level }).eq("id", signUpData.user!.id);
-    }
-    setLoading(false);
-    toast.success("Account created. Check your email to verify, then sign in.");
+    toast.success("Account created. Check your email to verify — you can start practising right away.");
     setTab("signin");
   };
+
 
 
   return (
@@ -127,24 +166,26 @@ function AuthPage() {
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="su-name">Full name</Label>
-                  <Input id="su-name" name="full_name" required />
+                  <Input id="su-name" name="full_name" required minLength={2} maxLength={120} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="su-matric">Matric / Student number</Label>
-                  <Input id="su-matric" name="matric_no" />
+                  <Label htmlFor="su-username">Username</Label>
+                  <Input
+                    id="su-username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value.replace(/\s/g, ""))}
+                    placeholder="e.g. ada_101"
+                    autoComplete="username"
+                    required
+                  />
+                  {checking ? (
+                    <p className="text-xs text-muted-foreground">Checking availability…</p>
+                  ) : unameState ? (
+                    <p className={`text-xs ${unameState.ok ? "text-success" : "text-destructive"}`}>{unameState.msg}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">3–20 characters: letters, numbers or underscores.</p>
+                  )}
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="su-level">Level</Label>
-                    <Input id="su-level" name="level" placeholder="100" />
-                  </div>
-                </div>
-                <SchoolDepartmentPicker
-                  schoolValue={suSchool}
-                  departmentValue={suDept}
-                  onSchoolChange={setSuSchool}
-                  onDepartmentChange={setSuDept}
-                />
 
                 <div className="space-y-1.5">
                   <Label htmlFor="su-email">Email</Label>
@@ -154,6 +195,10 @@ function AuthPage() {
                   <Label htmlFor="su-pw">Password</Label>
                   <Input id="su-pw" name="password" type="password" required minLength={6} autoComplete="new-password" />
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  We'll ask for your school, faculty, department and level right after you verify your email.
+                </p>
+
 
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Create account
