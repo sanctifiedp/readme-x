@@ -17,7 +17,9 @@ export const startPractice = createServerFn({ method: "POST" })
     const { assertEmailVerified } = await import("./verify.server");
     await assertEmailVerified(context.userId);
 
+    const { data: questions, error } = await supabaseAdmin
       .from("questions").select("id").eq("course_id", data.courseId);
+
     if (error) throw new Error(error.message);
     if (!questions || questions.length === 0) {
       throw new Error("This course has no questions yet. Ask an admin to add some.");
