@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { SchoolDepartmentPicker } from "@/components/SchoolDepartmentPicker";
+import { checkUsernamePublic } from "@/lib/guest.functions";
+
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
