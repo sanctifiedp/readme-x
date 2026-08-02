@@ -23,14 +23,38 @@ function AuthPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<"signin" | "signup">("signin");
-  const [suSchool, setSuSchool] = useState("");
-  const [suDept, setSuDept] = useState("");
+  const [username, setUsername] = useState("");
+  const [unameState, setUnameState] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/dashboard" });
     });
   }, [navigate]);
+
+  // Live username availability
+  useEffect(() => {
+    const uname = username.trim().toLowerCase();
+    if (!uname) { setUnameState(null); return; }
+    if (!/^[a-z0-9_]{3,20}$/.test(uname)) {
+      setUnameState({ ok: false, msg: "3–20 characters: letters, numbers or underscores." });
+      return;
+    }
+    let alive = true;
+    setChecking(true);
+    const t = setTimeout(async () => {
+      try {
+        const res = await checkUsernamePublic({ data: { username: uname } });
+        if (alive) setUnameState({ ok: res.available, msg: res.available ? "Available" : (res.reason ?? "Taken") });
+      } catch {
+        if (alive) setUnameState(null);
+      } finally {
+        if (alive) setChecking(false);
+      }
+    }, 400);
+    return () => { alive = false; clearTimeout(t); setChecking(false); };
+  }, [username]);
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -51,38 +75,52 @@ function AuthPage() {
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
     const fd = new FormData(e.currentTarget);
+    const uname = username.trim().toLowerCase();
+    if (!/^[a-z0-9_]{3,20}$/.test(uname)) {
+      toast.error("Pick a username with 3–20 letters, numbers or underscores.");
+      return;
+    }
+    if (unameState && !unameState.ok) {
+      toast.error(unameState.msg);
+      return;
+    }
+    setLoading(true);
+    // Final server-side uniqueness check right before signup
+    try {
+      const check = await checkUsernamePublic({ data: { username: uname } });
+      if (!check.available) {
+        setLoading(false);
+        setUnameState({ ok: false, msg: check.reason ?? "That username is taken." });
+        toast.error(check.reason ?? "That username is taken.");
+        return;
+      }
+    } catch {
+      /* fall through — the trigger keeps usernames unique */
+    }
+
     const email = String(fd.get("email"));
     const password = String(fd.get("password"));
-    const full_name = String(fd.get("full_name"));
-    const matric_no = String(fd.get("matric_no"));
-    const school = String(fd.get("school") ?? "");
-    const department = String(fd.get("department") ?? "");
-    const level = String(fd.get("level") ?? "");
+    const full_name = String(fd.get("full_name")).trim();
 
-    const { data: signUpData, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
-        data: { full_name, matric_no, school, department, level },
+        emailRedirectTo: `${window.location.origin}/onboarding`,
+        data: { full_name, username: uname },
       },
     });
 
+    setLoading(false);
     if (error) {
-      setLoading(false);
       toast.error(error.message);
       return;
     }
-    // Best-effort: write school/department/level to profile if a session exists
-    if (signUpData.session) {
-      await supabase.from("profiles").update({ school, department, level }).eq("id", signUpData.user!.id);
-    }
-    setLoading(false);
-    toast.success("Account created. Check your email to verify, then sign in.");
+    toast.success("Account created. Check your email to verify — you can start practising right away.");
     setTab("signin");
   };
+
 
 
   return (

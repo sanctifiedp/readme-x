@@ -26,6 +26,7 @@ import { Route as PracticeCourseIdRouteImport } from './routes/practice.$courseI
 import { Route as GuestExamCourseIdRouteImport } from './routes/guest-exam.$courseId'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
 import { Route as AuthenticatedFriendsRouteImport } from './routes/_authenticated/friends'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -123,6 +124,11 @@ const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedLeaderboardRoute =
   AuthenticatedLeaderboardRouteImport.update({
     id: '/leaderboard',
@@ -206,6 +212,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/friends': typeof AuthenticatedFriendsRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/guest-exam/$courseId': typeof GuestExamCourseIdRoute
@@ -236,6 +243,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/friends': typeof AuthenticatedFriendsRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/guest-exam/$courseId': typeof GuestExamCourseIdRoute
@@ -268,6 +276,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/friends': typeof AuthenticatedFriendsRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
+  '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/guest-exam/$courseId': typeof GuestExamCourseIdRoute
@@ -300,6 +309,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/friends'
     | '/leaderboard'
+    | '/onboarding'
     | '/profile'
     | '/settings'
     | '/guest-exam/$courseId'
@@ -330,6 +340,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/friends'
     | '/leaderboard'
+    | '/onboarding'
     | '/profile'
     | '/settings'
     | '/guest-exam/$courseId'
@@ -361,6 +372,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/friends'
     | '/_authenticated/leaderboard'
+    | '/_authenticated/onboarding'
     | '/_authenticated/profile'
     | '/_authenticated/settings'
     | '/guest-exam/$courseId'
@@ -515,6 +527,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfileRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/leaderboard': {
       id: '/_authenticated/leaderboard'
       path: '/leaderboard'
@@ -608,6 +627,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFriendsRoute: typeof AuthenticatedFriendsRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
+  AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedChallengeChallengeIdRoute: typeof AuthenticatedChallengeChallengeIdRoute
@@ -625,6 +645,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFriendsRoute: AuthenticatedFriendsRoute,
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
+  AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedChallengeChallengeIdRoute:
