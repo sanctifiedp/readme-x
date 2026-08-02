@@ -23,6 +23,7 @@ import { Route as UUsernameRouteImport } from './routes/u.$username'
 import { Route as TournamentsIdRouteImport } from './routes/tournaments.$id'
 import { Route as TakeExamIdRouteImport } from './routes/take.$examId'
 import { Route as PracticeCourseIdRouteImport } from './routes/practice.$courseId'
+import { Route as GuestExamCourseIdRouteImport } from './routes/guest-exam.$courseId'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
@@ -105,6 +106,11 @@ const TakeExamIdRoute = TakeExamIdRouteImport.update({
 const PracticeCourseIdRoute = PracticeCourseIdRouteImport.update({
   id: '/practice/$courseId',
   path: '/practice/$courseId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuestExamCourseIdRoute = GuestExamCourseIdRouteImport.update({
+  id: '/guest-exam/$courseId',
+  path: '/guest-exam/$courseId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
@@ -202,6 +208,7 @@ export interface FileRoutesByFullPath {
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/guest-exam/$courseId': typeof GuestExamCourseIdRoute
   '/practice/$courseId': typeof PracticeCourseIdRoute
   '/take/$examId': typeof TakeExamIdRoute
   '/tournaments/$id': typeof TournamentsIdRoute
@@ -231,6 +238,7 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/guest-exam/$courseId': typeof GuestExamCourseIdRoute
   '/practice/$courseId': typeof PracticeCourseIdRoute
   '/take/$examId': typeof TakeExamIdRoute
   '/tournaments/$id': typeof TournamentsIdRoute
@@ -262,6 +270,7 @@ export interface FileRoutesById {
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/guest-exam/$courseId': typeof GuestExamCourseIdRoute
   '/practice/$courseId': typeof PracticeCourseIdRoute
   '/take/$examId': typeof TakeExamIdRoute
   '/tournaments/$id': typeof TournamentsIdRoute
@@ -293,6 +302,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/profile'
     | '/settings'
+    | '/guest-exam/$courseId'
     | '/practice/$courseId'
     | '/take/$examId'
     | '/tournaments/$id'
@@ -322,6 +332,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/profile'
     | '/settings'
+    | '/guest-exam/$courseId'
     | '/practice/$courseId'
     | '/take/$examId'
     | '/tournaments/$id'
@@ -352,6 +363,7 @@ export interface FileRouteTypes {
     | '/_authenticated/leaderboard'
     | '/_authenticated/profile'
     | '/_authenticated/settings'
+    | '/guest-exam/$courseId'
     | '/practice/$courseId'
     | '/take/$examId'
     | '/tournaments/$id'
@@ -376,6 +388,7 @@ export interface RootRouteChildren {
   NotesRoute: typeof NotesRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TournamentsRoute: typeof TournamentsRouteWithChildren
+  GuestExamCourseIdRoute: typeof GuestExamCourseIdRoute
   PracticeCourseIdRoute: typeof PracticeCourseIdRoute
   TakeExamIdRoute: typeof TakeExamIdRoute
   UUsernameRoute: typeof UUsernameRoute
@@ -479,6 +492,13 @@ declare module '@tanstack/react-router' {
       path: '/practice/$courseId'
       fullPath: '/practice/$courseId'
       preLoaderRoute: typeof PracticeCourseIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guest-exam/$courseId': {
+      id: '/guest-exam/$courseId'
+      path: '/guest-exam/$courseId'
+      fullPath: '/guest-exam/$courseId'
+      preLoaderRoute: typeof GuestExamCourseIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/settings': {
@@ -644,6 +664,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotesRoute: NotesRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TournamentsRoute: TournamentsRouteWithChildren,
+  GuestExamCourseIdRoute: GuestExamCourseIdRoute,
   PracticeCourseIdRoute: PracticeCourseIdRoute,
   TakeExamIdRoute: TakeExamIdRoute,
   UUsernameRoute: UUsernameRoute,
