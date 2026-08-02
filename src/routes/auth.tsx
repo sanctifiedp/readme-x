@@ -165,24 +165,26 @@ function AuthPage() {
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="su-name">Full name</Label>
-                  <Input id="su-name" name="full_name" required />
+                  <Input id="su-name" name="full_name" required minLength={2} maxLength={120} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="su-matric">Matric / Student number</Label>
-                  <Input id="su-matric" name="matric_no" />
+                  <Label htmlFor="su-username">Username</Label>
+                  <Input
+                    id="su-username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value.replace(/\s/g, ""))}
+                    placeholder="e.g. ada_101"
+                    autoComplete="username"
+                    required
+                  />
+                  {checking ? (
+                    <p className="text-xs text-muted-foreground">Checking availability…</p>
+                  ) : unameState ? (
+                    <p className={`text-xs ${unameState.ok ? "text-success" : "text-destructive"}`}>{unameState.msg}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">3–20 characters: letters, numbers or underscores.</p>
+                  )}
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="su-level">Level</Label>
-                    <Input id="su-level" name="level" placeholder="100" />
-                  </div>
-                </div>
-                <SchoolDepartmentPicker
-                  schoolValue={suSchool}
-                  departmentValue={suDept}
-                  onSchoolChange={setSuSchool}
-                  onDepartmentChange={setSuDept}
-                />
 
                 <div className="space-y-1.5">
                   <Label htmlFor="su-email">Email</Label>
@@ -192,6 +194,10 @@ function AuthPage() {
                   <Label htmlFor="su-pw">Password</Label>
                   <Input id="su-pw" name="password" type="password" required minLength={6} autoComplete="new-password" />
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  We'll ask for your school, faculty, department and level right after you verify your email.
+                </p>
+
 
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Create account
