@@ -3,17 +3,33 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+const SIX_MONTHS_MS = 1000 * 60 * 60 * 24 * 183;
+
+function cooldown(changedAt: string | null, currentValue: string | null) {
+  // First-time setup is always allowed.
+  if (!currentValue || !changedAt) return { locked: false, unlocksAt: null as string | null };
+  const unlocks = new Date(changedAt).getTime() + SIX_MONTHS_MS;
+  return unlocks > Date.now()
+    ? { locked: true, unlocksAt: new Date(unlocks).toISOString() }
+    : { locked: false, unlocksAt: null };
+}
+
 export const getMyProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data: profile, error } = await supabaseAdmin
       .from("profiles")
-      .select("id, email, username, full_name, avatar_url, matric_no, school, faculty, department, level, xp, streak_count, created_at")
+      .select("id, email, username, full_name, avatar_url, matric_no, school, faculty, department, level, xp, streak_count, created_at, school_changed_at, level_changed_at")
       .eq("id", context.userId)
       .single();
     if (error) throw new Error(error.message);
-    return profile;
+    return {
+      ...profile,
+      schoolLock: cooldown(profile.school_changed_at, profile.school),
+      levelLock: cooldown(profile.level_changed_at, profile.level),
+    };
   });
+
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
 
