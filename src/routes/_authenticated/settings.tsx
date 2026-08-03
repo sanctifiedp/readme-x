@@ -198,16 +198,23 @@ function SettingsPage() {
                   placeholder="https://..." />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="matric_no">Matric / Student no.</Label>
                   <Input id="matric_no" value={form.matric_no}
                     onChange={(e) => setForm((f) => ({ ...f, matric_no: e.target.value }))} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="level">Level</Label>
-                  <Input id="level" value={form.level}
+                  <Label htmlFor="level">Academic Level *</Label>
+                  <Input id="level" value={form.level} required placeholder="e.g. 200"
+                    disabled={levelLocked}
                     onChange={(e) => setForm((f) => ({ ...f, level: e.target.value }))} />
+                  {levelLocked && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Lock className="h-3 w-3" /> You can change your academic level again on{" "}
+                      {formatLockDate(profile?.levelLock?.unlocksAt)}.
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -216,13 +223,22 @@ function SettingsPage() {
                 departmentValue={form.department}
                 onSchoolChange={(v) => setForm((f) => ({ ...f, school: v }))}
                 onDepartmentChange={(v) => setForm((f) => ({ ...f, department: v }))}
+                required
+                schoolDisabled={schoolLocked}
+                schoolHint={schoolLocked ? (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Lock className="h-3 w-3" /> You can change your school again on{" "}
+                    {formatLockDate(profile?.schoolLock?.unlocksAt)}.
+                  </p>
+                ) : undefined}
               />
 
               <div className="space-y-1.5">
-                <Label htmlFor="faculty">Faculty (optional)</Label>
-                <Input id="faculty" value={form.faculty}
+                <Label htmlFor="faculty">Faculty / College (Optional)</Label>
+                <Input id="faculty" value={form.faculty} placeholder="e.g. College of Science"
                   onChange={(e) => setForm((f) => ({ ...f, faculty: e.target.value }))} />
               </div>
+
 
               <Button type="submit" disabled={saveMut.isPending}>
                 {saveMut.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Save changes
