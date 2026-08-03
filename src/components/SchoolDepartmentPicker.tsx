@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { listSchools, listDepartments } from "@/lib/lookups.functions";
 
@@ -16,12 +15,16 @@ type Props = {
   required?: boolean;
   layout?: "stacked" | "grid";
   includeEmpty?: { label: string };
+  /** Lock the school select (e.g. 6-month change cooldown). Value stays visible. */
+  schoolDisabled?: boolean;
+  schoolHint?: React.ReactNode;
 };
 
 export function SchoolDepartmentPicker({
   schoolValue, departmentValue, onSchoolChange, onDepartmentChange,
   schoolName = "school", departmentName = "department",
   required, layout = "stacked", includeEmpty,
+  schoolDisabled, schoolHint,
 }: Props) {
   const schoolsFn = useServerFn(listSchools);
   const deptsFn = useServerFn(listDepartments);
@@ -42,18 +45,26 @@ export function SchoolDepartmentPicker({
   });
   const departments = deptsData?.departments ?? [];
 
-  // Clear department if it no longer belongs to selected school
+  // Only clear the department when the user actually switches school — never
+  // during loading/hydration, otherwise a saved department gets wiped.
+  const lastSchool = useRef<string | null>(null);
   useEffect(() => {
-    if (!schoolId) {
-      if (departmentValue) onDepartmentChange("");
+    if (lastSchool.current === null) {
+      lastSchool.current = schoolValue;
       return;
     }
-    if (departmentValue && !departments.some((d) => d.name === departmentValue)) {
-      onDepartmentChange("");
+    if (lastSchool.current !== schoolValue) {
+      lastSchool.current = schoolValue;
+      if (departmentValue) onDepartmentChange("");
     }
-  }, [schoolId, departments]);
+  }, [schoolValue, departmentValue, onDepartmentChange]);
 
   const SENTINEL = "__none__";
+  const deptOptions = departments.map((d) => d.name);
+  // Keep a persisted department visible even if it isn't in the lookup list.
+  if (departmentValue && !deptOptions.includes(departmentValue)) deptOptions.unshift(departmentValue);
+  const schoolOptions = schools.map((s) => s.name);
+  if (schoolValue && !schoolOptions.includes(schoolValue)) schoolOptions.unshift(schoolValue);
 
   const schoolSelect = (
     <div className="space-y-1.5">
@@ -61,17 +72,19 @@ export function SchoolDepartmentPicker({
       <Select
         value={schoolValue || (includeEmpty ? SENTINEL : undefined)}
         onValueChange={(v) => onSchoolChange(v === SENTINEL ? "" : v)}
+        disabled={schoolDisabled}
       >
         <SelectTrigger><SelectValue placeholder="Select school" /></SelectTrigger>
         <SelectContent>
           {includeEmpty && <SelectItem value={SENTINEL}>{includeEmpty.label}</SelectItem>}
-          {schools.length === 0 ? (
+          {schoolOptions.length === 0 ? (
             <div className="px-3 py-2 text-xs text-muted-foreground">No schools yet — ask an admin.</div>
-          ) : schools.map((s) => (
-            <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+          ) : schoolOptions.map((name) => (
+            <SelectItem key={name} value={name}>{name}</SelectItem>
           ))}
         </SelectContent>
       </Select>
+      {schoolHint}
       <input type="hidden" name={schoolName} value={schoolValue} />
     </div>
   );
@@ -82,15 +95,15 @@ export function SchoolDepartmentPicker({
       <Select
         value={departmentValue || (includeEmpty ? SENTINEL : undefined)}
         onValueChange={(v) => onDepartmentChange(v === SENTINEL ? "" : v)}
-        disabled={!schoolId}
+        disabled={!schoolValue}
       >
-        <SelectTrigger><SelectValue placeholder={schoolId ? "Select department" : "Select school first"} /></SelectTrigger>
+        <SelectTrigger><SelectValue placeholder={schoolValue ? "Select department" : "Select school first"} /></SelectTrigger>
         <SelectContent>
           {includeEmpty && <SelectItem value={SENTINEL}>{includeEmpty.label}</SelectItem>}
-          {departments.length === 0 ? (
+          {deptOptions.length === 0 ? (
             <div className="px-3 py-2 text-xs text-muted-foreground">No departments listed.</div>
-          ) : departments.map((d) => (
-            <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>
+          ) : deptOptions.map((name) => (
+            <SelectItem key={name} value={name}>{name}</SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -103,3 +116,4 @@ export function SchoolDepartmentPicker({
   }
   return <>{schoolSelect}{deptSelect}</>;
 }
+

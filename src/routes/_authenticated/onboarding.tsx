@@ -190,14 +190,14 @@ function OnboardingPage() {
               <Input id="ob-matric" value={matric} onChange={(e) => setMatric(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ob-level">Level</Label>
+              <Label htmlFor="ob-level">Academic Level *</Label>
               <Input id="ob-level" value={level} onChange={(e) => setLevel(e.target.value)} placeholder="100" />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="ob-faculty">Faculty</Label>
-            <Input id="ob-faculty" value={faculty} onChange={(e) => setFaculty(e.target.value)} placeholder="e.g. Science" />
+            <Label htmlFor="ob-faculty">Faculty / College (Optional)</Label>
+            <Input id="ob-faculty" value={faculty} onChange={(e) => setFaculty(e.target.value)} placeholder="e.g. College of Science" />
           </div>
 
           <SchoolDepartmentPicker
@@ -205,6 +205,8 @@ function OnboardingPage() {
             departmentValue={department}
             onSchoolChange={setSchool}
             onDepartmentChange={setDepartment}
+            required
+            schoolDisabled={!!profile?.schoolLock?.locked}
           />
 
           <div className="flex flex-wrap gap-2">
