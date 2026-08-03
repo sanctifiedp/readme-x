@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Trash2, AlertTriangle, KeyRound, User, AtSign, Image as ImageIcon } from "lucide-react";
+import { Loader2, Trash2, AlertTriangle, KeyRound, User, AtSign, Image as ImageIcon, Lock } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,11 @@ function SettingsPage() {
   const [pw, setPw] = useState({ next: "", confirm: "" });
   const [confirmText, setConfirmText] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const schoolLocked = !!profile?.schoolLock?.locked;
+  const levelLocked = !!profile?.levelLock?.locked;
+  const formatLockDate = (iso?: string | null) =>
+    iso ? new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }) : "";
 
   useEffect(() => {
     if (profile) {
