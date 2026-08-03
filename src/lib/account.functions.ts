@@ -57,11 +57,11 @@ export const updateMyProfile = createServerFn({ method: "POST" })
         full_name: z.string().trim().min(1).max(120),
         username: z.string().trim().regex(USERNAME_RE, "3–20 letters, numbers or underscores").optional(),
         avatar_url: z.string().trim().url().max(500).optional().or(z.literal("")),
-        matric_no: z.string().trim().max(60).optional().default(""),
-        school: z.string().trim().max(120).optional().default(""),
-        faculty: z.string().trim().max(120).optional().default(""),
-        department: z.string().trim().max(120).optional().default(""),
-        level: z.string().trim().max(20).optional().default(""),
+        matric_no: z.string().trim().max(60).optional(),
+        school: z.string().trim().max(120).optional(),
+        faculty: z.string().trim().max(120).optional(),
+        department: z.string().trim().max(120).optional(),
+        level: z.string().trim().max(20).optional(),
       })
       .parse(input),
   )
@@ -74,22 +74,63 @@ export const updateMyProfile = createServerFn({ method: "POST" })
         throw new Error("That username is taken.");
       }
     }
+
+    const { data: current, error: e2 } = await supabaseAdmin
+      .from("profiles")
+      .select("school, level, school_changed_at, level_changed_at")
+      .eq("id", context.userId)
+      .single();
+    if (e2) throw new Error(e2.message);
+
+    const patch: Record<string, string | null> = { full_name: data.full_name };
+    if (data.username) patch.username = data.username;
+    if (data.avatar_url !== undefined) patch.avatar_url = data.avatar_url || null;
+    if (data.matric_no !== undefined) patch.matric_no = data.matric_no || null;
+    if (data.faculty !== undefined) patch.faculty = data.faculty || null;
+
+    // School / department: both required together, and a school change re-requires a department.
+    const nextSchool = data.school?.trim();
+    const nextDept = data.department?.trim();
+    if (nextSchool !== undefined && nextSchool !== (current.school ?? "")) {
+      const lock = cooldown(current.school_changed_at, current.school);
+      if (lock.locked) {
+        throw new Error(
+          `School changes are locked. You can change your school again on ${new Date(lock.unlocksAt!).toLocaleDateString()}.`,
+        );
+      }
+      if (!nextSchool) throw new Error("School is required.");
+      if (!nextDept) throw new Error("Select a department for your new school before saving.");
+      patch.school = nextSchool;
+      patch.department = nextDept;
+    } else if (nextDept !== undefined) {
+      if (!nextDept && (nextSchool ?? current.school)) throw new Error("Department is required.");
+      if (nextDept) patch.department = nextDept;
+    }
+
+    const nextLevel = data.level?.trim();
+    if (nextLevel !== undefined && nextLevel !== (current.level ?? "")) {
+      const lock = cooldown(current.level_changed_at, current.level);
+      if (lock.locked) {
+        throw new Error(
+          `Academic level changes are locked. You can change your level again on ${new Date(lock.unlocksAt!).toLocaleDateString()}.`,
+        );
+      }
+      if (!nextLevel) throw new Error("Academic level is required.");
+      patch.level = nextLevel;
+    }
+
     const { error } = await supabaseAdmin
       .from("profiles")
-      .update({
-        full_name: data.full_name,
-        username: data.username || undefined,
-        avatar_url: data.avatar_url ? data.avatar_url : null,
-        matric_no: data.matric_no || null,
-        school: data.school || null,
-        faculty: data.faculty || null,
-        department: data.department || null,
-        level: data.level || null,
-      })
+      .update(patch)
       .eq("id", context.userId);
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (error.message.includes("SCHOOL_COOLDOWN")) throw new Error("School changes are locked for 6 months.");
+      if (error.message.includes("LEVEL_COOLDOWN")) throw new Error("Academic level changes are locked for 6 months.");
+      throw new Error(error.message);
+    }
     return { ok: true };
   });
+
 
 export const getPublicProfileByUsername = createServerFn({ method: "GET" })
   .inputValidator((input) => z.object({ username: z.string().trim().min(1).max(40) }).parse(input))
