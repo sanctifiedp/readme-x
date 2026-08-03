@@ -82,7 +82,11 @@ export const updateMyProfile = createServerFn({ method: "POST" })
       .single();
     if (e2) throw new Error(e2.message);
 
-    const patch: Record<string, string | null> = { full_name: data.full_name };
+    type ProfilePatch = {
+      full_name: string; username?: string; avatar_url?: string | null; matric_no?: string | null;
+      faculty?: string | null; school?: string; department?: string; level?: string;
+    };
+    const patch: ProfilePatch = { full_name: data.full_name };
     if (data.username) patch.username = data.username;
     if (data.avatar_url !== undefined) patch.avatar_url = data.avatar_url || null;
     if (data.matric_no !== undefined) patch.matric_no = data.matric_no || null;
