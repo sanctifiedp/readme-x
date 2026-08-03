@@ -679,10 +679,12 @@ export type Database = {
           full_name: string | null
           id: string
           level: string | null
+          level_changed_at: string | null
           matric_no: string | null
           phone: string | null
           phone_verified: boolean
           school: string | null
+          school_changed_at: string | null
           streak_count: number
           streak_last_day: string | null
           username: string | null
@@ -703,10 +705,12 @@ export type Database = {
           full_name?: string | null
           id: string
           level?: string | null
+          level_changed_at?: string | null
           matric_no?: string | null
           phone?: string | null
           phone_verified?: boolean
           school?: string | null
+          school_changed_at?: string | null
           streak_count?: number
           streak_last_day?: string | null
           username?: string | null
@@ -727,10 +731,12 @@ export type Database = {
           full_name?: string | null
           id?: string
           level?: string | null
+          level_changed_at?: string | null
           matric_no?: string | null
           phone?: string | null
           phone_verified?: boolean
           school?: string | null
+          school_changed_at?: string | null
           streak_count?: number
           streak_last_day?: string | null
           username?: string | null
