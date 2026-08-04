@@ -79,7 +79,7 @@ function SettingsPage() {
       setForm({
         full_name: profile.full_name ?? "",
         username: profile.username ?? "",
-        avatar_url: profile.avatar_url ?? "",
+        
         matric_no: profile.matric_no ?? "",
         school: profile.school ?? "",
         faculty: profile.faculty ?? "",
