@@ -57,7 +57,7 @@ function SettingsPage() {
   const [form, setForm] = useState({
     full_name: "",
     username: "",
-    avatar_url: "",
+    
     matric_no: "",
     school: "",
     faculty: "",
