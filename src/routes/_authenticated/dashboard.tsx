@@ -117,13 +117,15 @@ function StatCard({
   sub?: string;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
-        {icon}
-        <span>{label}</span>
+    <div className="min-w-0 rounded-xl border border-border bg-card p-4">
+      <div className="flex min-w-0 items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+        <span className="shrink-0">{icon}</span>
+        <span className="truncate">{label}</span>
       </div>
-      <div className="mt-2 text-2xl font-bold">{value}</div>
-      {sub && <div className="text-xs text-muted-foreground mt-0.5">{sub}</div>}
+
+      <div className="mt-2 text-xl sm:text-2xl font-bold break-words">{value}</div>
+      {sub && <div className="text-xs text-muted-foreground mt-0.5 break-words">{sub}</div>}
+
     </div>
   );
 }
@@ -300,26 +302,27 @@ function Dashboard() {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
-      <main className="flex-1 container mx-auto px-4 py-8 space-y-8">
+      <main className="flex-1 container mx-auto px-4 py-6 sm:py-8 space-y-6 sm:space-y-8">
         {/* Welcome */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-bold">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold break-words">
               Welcome{profile?.fullName ? `, ${profile.fullName.split(" ")[0]}` : ""}
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">
+            <p className="text-muted-foreground text-sm mt-1 break-words">
               {[profile?.school, profile?.department, profile?.level].filter(Boolean).join(" · ") ||
                 "Add your school and department in Settings to unlock recommendations."}
             </p>
           </div>
           {data?.isAdmin && (
-            <Link to="/admin">
-              <Button variant="outline" className="gap-2">
+            <Link to="/admin" className="shrink-0">
+              <Button variant="outline" className="w-full min-h-11 gap-2 md:w-auto">
                 <ShieldCheck className="h-4 w-4" /> Admin panel
               </Button>
             </Link>
           )}
         </div>
+
 
         {/* Continue Exam */}
         {data?.unfinished && (
@@ -366,18 +369,19 @@ function Dashboard() {
         {/* Today's Progress */}
         <section>
           <h2 className="text-xl font-semibold mb-4">Today's progress</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 min-[380px]:grid-cols-2 md:grid-cols-4 gap-3">
             <StatCard
               icon={<Sparkles className="h-4 w-4" />}
               label="Today XP"
               value={`+${data?.todayXp ?? 0}`}
               sub={`Total ${profile?.xp ?? 0} XP`}
             />
-            <div className="rounded-xl border border-border bg-card p-4">
-              <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
-                <Star className="h-4 w-4" />
-                <span>ReadMe Level</span>
+            <div className="min-w-0 rounded-xl border border-border bg-card p-4">
+              <div className="flex min-w-0 items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+                <Star className="h-4 w-4 shrink-0" />
+                <span className="truncate">ReadMe Level</span>
               </div>
+
               <div className="mt-2 text-2xl font-bold">{profile?.readmeLevel ?? 1}</div>
               {profile && (
                 <>

@@ -3,7 +3,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Trash2, AlertTriangle, KeyRound, User, AtSign, Image as ImageIcon, Lock } from "lucide-react";
+import { Loader2, Trash2, AlertTriangle, KeyRound, User, AtSign, Lock } from "lucide-react";
+import { AvatarUploader } from "@/components/AvatarUploader";
+
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Button } from "@/components/ui/button";
@@ -55,7 +57,7 @@ function SettingsPage() {
   const [form, setForm] = useState({
     full_name: "",
     username: "",
-    avatar_url: "",
+    
     matric_no: "",
     school: "",
     faculty: "",
@@ -77,7 +79,7 @@ function SettingsPage() {
       setForm({
         full_name: profile.full_name ?? "",
         username: profile.username ?? "",
-        avatar_url: profile.avatar_url ?? "",
+        
         matric_no: profile.matric_no ?? "",
         school: profile.school ?? "",
         faculty: profile.faculty ?? "",
@@ -148,14 +150,23 @@ function SettingsPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
-      <main className="flex-1 container mx-auto px-4 py-10 max-w-3xl space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold">Settings</h1>
-          <p className="text-muted-foreground text-sm mt-1">{profile?.email}</p>
+      <main className="flex-1 container mx-auto px-4 py-8 sm:py-10 max-w-3xl space-y-6 sm:space-y-8">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold">Settings</h1>
+          <p className="text-muted-foreground text-sm mt-1 break-words">{profile?.email}</p>
         </div>
 
-        <section className="rounded-2xl border border-border bg-card p-6">
+        <section className="rounded-2xl border border-border bg-card p-4 sm:p-6">
+          <AvatarUploader
+            currentUrl={profile?.avatar_url}
+            name={profile?.full_name ?? profile?.username}
+            hasAvatar={!!profile?.has_avatar}
+          />
+        </section>
+
+        <section className="rounded-2xl border border-border bg-card p-4 sm:p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><User className="h-5 w-5" /> Account</h2>
+
           {isLoading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
           ) : (
@@ -196,12 +207,8 @@ function SettingsPage() {
                 </p>
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="avatar_url" className="flex items-center gap-1"><ImageIcon className="h-3.5 w-3.5" /> Avatar image URL</Label>
-                <Input id="avatar_url" type="url" value={form.avatar_url}
-                  onChange={(e) => setForm((f) => ({ ...f, avatar_url: e.target.value }))}
-                  placeholder="https://..." />
-              </div>
+
+
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
@@ -245,14 +252,14 @@ function SettingsPage() {
               </div>
 
 
-              <Button type="submit" disabled={saveMut.isPending}>
+              <Button type="submit" disabled={saveMut.isPending} className="w-full min-h-11 sm:w-auto">
                 {saveMut.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Save changes
               </Button>
             </form>
           )}
         </section>
 
-        <section className="rounded-2xl border border-border bg-card p-6">
+        <section className="rounded-2xl border border-border bg-card p-4 sm:p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><KeyRound className="h-5 w-5" /> Change password</h2>
           <form onSubmit={handleChangePassword} className="space-y-4 max-w-sm">
             <div className="space-y-1.5">
@@ -265,11 +272,11 @@ function SettingsPage() {
               <Input id="confirm-pw" type="password" minLength={6} value={pw.confirm}
                 onChange={(e) => setPw((p) => ({ ...p, confirm: e.target.value }))} required />
             </div>
-            <Button type="submit" disabled={busy} variant="outline">Update password</Button>
+            <Button type="submit" disabled={busy} variant="outline" className="w-full min-h-11 sm:w-auto">Update password</Button>
           </form>
         </section>
 
-        <section className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6">
+        <section className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 sm:p-6">
           <h2 className="text-lg font-semibold mb-2 flex items-center gap-2 text-destructive">
             <AlertTriangle className="h-5 w-5" /> Danger zone
           </h2>
@@ -278,10 +285,11 @@ function SettingsPage() {
           </p>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" className="gap-2">
+              <Button variant="destructive" className="w-full min-h-11 gap-2 sm:w-auto">
                 <Trash2 className="h-4 w-4" /> Delete my account
               </Button>
             </AlertDialogTrigger>
+
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete your account?</AlertDialogTitle>
