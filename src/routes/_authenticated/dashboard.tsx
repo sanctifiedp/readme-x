@@ -117,11 +117,12 @@ function StatCard({
   sub?: string;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
-        {icon}
-        <span>{label}</span>
+    <div className="min-w-0 rounded-xl border border-border bg-card p-4">
+      <div className="flex min-w-0 items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+        <span className="shrink-0">{icon}</span>
+        <span className="truncate">{label}</span>
       </div>
+
       <div className="mt-2 text-2xl font-bold">{value}</div>
       {sub && <div className="text-xs text-muted-foreground mt-0.5">{sub}</div>}
     </div>
