@@ -168,7 +168,7 @@ export const getPersonalizedDashboard = createServerFn({ method: "GET" })
         id: profile.id,
         fullName: profile.full_name,
         username: profile.username,
-        avatarUrl: profile.avatar_url,
+        avatarUrl: await (await import("@/lib/avatar.server")).resolveAvatarUrl(profile.avatar_url),
         matricNo: profile.matric_no,
         email: profile.email,
         school: profile.school,
