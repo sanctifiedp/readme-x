@@ -72,10 +72,13 @@ const MORE_LINKS = [
 
 export function SiteHeader() {
   const [user, setUser] = useState<{ id: string; email?: string | null } | null>(null);
-  const [profile, setProfile] = useState<MiniProfile | null>(null);
   const [dark, setDark] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const navigate = useNavigate();
+  const { data: myProfile } = useMyProfile();
+  const profile: MiniProfile | null = myProfile
+    ? { full_name: myProfile.full_name, username: myProfile.username, avatar_url: myProfile.avatar_url }
+    : null;
 
   useEffect(() => {
     initTheme();
@@ -87,14 +90,6 @@ export function SiteHeader() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (!user) { setProfile(null); return; }
-    supabase.from("profiles")
-      .select("full_name, username, avatar_url")
-      .eq("id", user.id)
-      .maybeSingle()
-      .then(({ data }) => setProfile((data as MiniProfile) ?? null));
-  }, [user]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
