@@ -26,7 +26,8 @@ export const getLeaderboard = createServerFn({ method: "POST" })
       _limit: data.limit,
     });
     if (error) throw new Error(error.message);
-    return (rows ?? []) as Array<{
+    const { resolveAvatarUrl } = await import("@/lib/avatar.server");
+    const list = (rows ?? []) as Array<{
       user_id: string;
       username: string | null;
       full_name: string | null;
@@ -37,7 +38,11 @@ export const getLeaderboard = createServerFn({ method: "POST" })
       xp: number;
       rank: number;
     }>;
+    return Promise.all(
+      list.map(async (r) => ({ ...r, avatar_url: await resolveAvatarUrl(r.avatar_url) })),
+    );
   });
+
 
 export const getLeaderboardFilters = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
