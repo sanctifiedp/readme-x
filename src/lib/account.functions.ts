@@ -186,8 +186,10 @@ export const getPublicProfileByUsername = createServerFn({ method: "GET" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!profile) throw new Error("User not found");
-    return profile;
+    const { resolveAvatarUrl } = await import("@/lib/avatar.server");
+    return { ...profile, avatar_url: await resolveAvatarUrl(profile.avatar_url) };
   });
+
 
 export const deleteMyAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
