@@ -376,11 +376,12 @@ function Dashboard() {
               value={`+${data?.todayXp ?? 0}`}
               sub={`Total ${profile?.xp ?? 0} XP`}
             />
-            <div className="rounded-xl border border-border bg-card p-4">
-              <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
-                <Star className="h-4 w-4" />
-                <span>ReadMe Level</span>
+            <div className="min-w-0 rounded-xl border border-border bg-card p-4">
+              <div className="flex min-w-0 items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+                <Star className="h-4 w-4 shrink-0" />
+                <span className="truncate">ReadMe Level</span>
               </div>
+
               <div className="mt-2 text-2xl font-bold">{profile?.readmeLevel ?? 1}</div>
               {profile && (
                 <>
