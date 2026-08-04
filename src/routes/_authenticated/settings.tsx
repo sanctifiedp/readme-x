@@ -252,14 +252,14 @@ function SettingsPage() {
               </div>
 
 
-              <Button type="submit" disabled={saveMut.isPending}>
+              <Button type="submit" disabled={saveMut.isPending} className="w-full min-h-11 sm:w-auto">
                 {saveMut.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Save changes
               </Button>
             </form>
           )}
         </section>
 
-        <section className="rounded-2xl border border-border bg-card p-6">
+        <section className="rounded-2xl border border-border bg-card p-4 sm:p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><KeyRound className="h-5 w-5" /> Change password</h2>
           <form onSubmit={handleChangePassword} className="space-y-4 max-w-sm">
             <div className="space-y-1.5">
@@ -272,11 +272,11 @@ function SettingsPage() {
               <Input id="confirm-pw" type="password" minLength={6} value={pw.confirm}
                 onChange={(e) => setPw((p) => ({ ...p, confirm: e.target.value }))} required />
             </div>
-            <Button type="submit" disabled={busy} variant="outline">Update password</Button>
+            <Button type="submit" disabled={busy} variant="outline" className="w-full min-h-11 sm:w-auto">Update password</Button>
           </form>
         </section>
 
-        <section className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6">
+        <section className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 sm:p-6">
           <h2 className="text-lg font-semibold mb-2 flex items-center gap-2 text-destructive">
             <AlertTriangle className="h-5 w-5" /> Danger zone
           </h2>
@@ -285,10 +285,11 @@ function SettingsPage() {
           </p>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" className="gap-2">
+              <Button variant="destructive" className="w-full min-h-11 gap-2 sm:w-auto">
                 <Trash2 className="h-4 w-4" /> Delete my account
               </Button>
             </AlertDialogTrigger>
+
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete your account?</AlertDialogTitle>
