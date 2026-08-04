@@ -123,8 +123,9 @@ function StatCard({
         <span className="truncate">{label}</span>
       </div>
 
-      <div className="mt-2 text-2xl font-bold">{value}</div>
-      {sub && <div className="text-xs text-muted-foreground mt-0.5">{sub}</div>}
+      <div className="mt-2 text-xl sm:text-2xl font-bold break-words">{value}</div>
+      {sub && <div className="text-xs text-muted-foreground mt-0.5 break-words">{sub}</div>}
+
     </div>
   );
 }
