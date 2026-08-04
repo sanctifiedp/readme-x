@@ -367,7 +367,7 @@ function Dashboard() {
         {/* Today's Progress */}
         <section>
           <h2 className="text-xl font-semibold mb-4">Today's progress</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 min-[380px]:grid-cols-2 md:grid-cols-4 gap-3">
             <StatCard
               icon={<Sparkles className="h-4 w-4" />}
               label="Today XP"
