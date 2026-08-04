@@ -42,6 +42,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { initTheme, toggleTheme, isDark } from "@/lib/theme";
 import { VerifyEmailBanner } from "@/components/VerifyEmailBanner";
+import { useMyProfile } from "@/hooks/useMyProfile";
+
 
 const WA_URL = "https://wa.me/2349064887865";
 export const FEEDBACK_URL =
