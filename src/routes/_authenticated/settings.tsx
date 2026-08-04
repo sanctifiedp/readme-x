@@ -198,12 +198,8 @@ function SettingsPage() {
                 </p>
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="avatar_url" className="flex items-center gap-1"><ImageIcon className="h-3.5 w-3.5" /> Avatar image URL</Label>
-                <Input id="avatar_url" type="url" value={form.avatar_url}
-                  onChange={(e) => setForm((f) => ({ ...f, avatar_url: e.target.value }))}
-                  placeholder="https://..." />
-              </div>
+
+
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
