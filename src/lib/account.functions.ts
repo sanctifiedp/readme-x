@@ -17,18 +17,58 @@ function cooldown(changedAt: string | null, currentValue: string | null) {
 export const getMyProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { resolveAvatarUrl, AVATAR_PREFIX } = await import("@/lib/avatar.server");
     const { data: profile, error } = await supabaseAdmin
       .from("profiles")
       .select("id, email, username, full_name, avatar_url, matric_no, school, faculty, department, level, xp, streak_count, created_at, school_changed_at, level_changed_at")
       .eq("id", context.userId)
       .single();
     if (error) throw new Error(error.message);
+    const resolved = await resolveAvatarUrl(profile.avatar_url);
     return {
       ...profile,
+      avatar_url: resolved,
+      avatar_is_upload: !!profile.avatar_url?.startsWith(AVATAR_PREFIX),
+      has_avatar: !!profile.avatar_url,
       schoolLock: cooldown(profile.school_changed_at, profile.school),
       levelLock: cooldown(profile.level_changed_at, profile.level),
     };
   });
+
+export const uploadMyAvatar = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ dataUrl: z.string().min(30).max(6_000_000) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { decodeAvatarDataUrl, clearAvatarFolder, resolveAvatarUrl, AVATAR_BUCKET, AVATAR_PREFIX } =
+      await import("@/lib/avatar.server");
+    const { bytes, mime, ext } = decodeAvatarDataUrl(data.dataUrl);
+    await clearAvatarFolder(context.userId);
+    const path = `${context.userId}/${Date.now()}.${ext}`;
+    const { error: upErr } = await supabaseAdmin.storage
+      .from(AVATAR_BUCKET)
+      .upload(path, bytes, { contentType: mime, upsert: true });
+    if (upErr) throw new Error(upErr.message);
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({ avatar_url: `${AVATAR_PREFIX}${path}` })
+      .eq("id", context.userId);
+    if (error) throw new Error(error.message);
+    return { url: await resolveAvatarUrl(`${AVATAR_PREFIX}${path}`) };
+  });
+
+export const removeMyAvatar = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { clearAvatarFolder } = await import("@/lib/avatar.server");
+    await clearAvatarFolder(context.userId);
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({ avatar_url: null })
+      .eq("id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
