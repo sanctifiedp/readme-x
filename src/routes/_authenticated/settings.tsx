@@ -150,14 +150,23 @@ function SettingsPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
-      <main className="flex-1 container mx-auto px-4 py-10 max-w-3xl space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold">Settings</h1>
-          <p className="text-muted-foreground text-sm mt-1">{profile?.email}</p>
+      <main className="flex-1 container mx-auto px-4 py-8 sm:py-10 max-w-3xl space-y-6 sm:space-y-8">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold">Settings</h1>
+          <p className="text-muted-foreground text-sm mt-1 break-words">{profile?.email}</p>
         </div>
 
-        <section className="rounded-2xl border border-border bg-card p-6">
+        <section className="rounded-2xl border border-border bg-card p-4 sm:p-6">
+          <AvatarUploader
+            currentUrl={profile?.avatar_url}
+            name={profile?.full_name ?? profile?.username}
+            hasAvatar={!!profile?.has_avatar}
+          />
+        </section>
+
+        <section className="rounded-2xl border border-border bg-card p-4 sm:p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><User className="h-5 w-5" /> Account</h2>
+
           {isLoading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
           ) : (
