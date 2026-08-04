@@ -300,26 +300,27 @@ function Dashboard() {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
-      <main className="flex-1 container mx-auto px-4 py-8 space-y-8">
+      <main className="flex-1 container mx-auto px-4 py-6 sm:py-8 space-y-6 sm:space-y-8">
         {/* Welcome */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-bold">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold break-words">
               Welcome{profile?.fullName ? `, ${profile.fullName.split(" ")[0]}` : ""}
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">
+            <p className="text-muted-foreground text-sm mt-1 break-words">
               {[profile?.school, profile?.department, profile?.level].filter(Boolean).join(" · ") ||
                 "Add your school and department in Settings to unlock recommendations."}
             </p>
           </div>
           {data?.isAdmin && (
-            <Link to="/admin">
-              <Button variant="outline" className="gap-2">
+            <Link to="/admin" className="shrink-0">
+              <Button variant="outline" className="w-full min-h-11 gap-2 md:w-auto">
                 <ShieldCheck className="h-4 w-4" /> Admin panel
               </Button>
             </Link>
           )}
         </div>
+
 
         {/* Continue Exam */}
         {data?.unfinished && (
