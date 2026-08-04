@@ -3,7 +3,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Trash2, AlertTriangle, KeyRound, User, AtSign, Image as ImageIcon, Lock } from "lucide-react";
+import { Loader2, Trash2, AlertTriangle, KeyRound, User, AtSign, Lock } from "lucide-react";
+import { AvatarUploader } from "@/components/AvatarUploader";
+
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Button } from "@/components/ui/button";
