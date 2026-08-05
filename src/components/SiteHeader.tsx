@@ -2,6 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   BookOpen,
+  Bot,
   Moon,
   Sun,
   LogOut,
@@ -64,6 +65,7 @@ const PRIMARY_LINKS = [
 ] as const;
 
 const MORE_LINKS = [
+  { to: "/tutor", label: "AI Tutor", icon: Bot, auth: true, search: undefined },
   { to: "/tournaments", label: "Tournaments", icon: Sparkles, auth: false, search: undefined },
   { to: "/notes", label: "Notes", icon: StickyNote, auth: false, search: undefined },
   { to: "/challenges", label: "Challenges", icon: Swords, auth: true, search: {} as Record<string, never> },
