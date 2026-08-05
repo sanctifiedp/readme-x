@@ -260,7 +260,14 @@ export const addExtraCourse = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z.object({
       courseId: z.string().uuid(),
-      kind: z.enum(["carryover", "elective", "cross_level", "other"]).optional().default("other"),
+      // DB check constraint allows only: carryover | elective | extra.
+      // Legacy client values are normalized to a valid kind.
+      kind: z
+        .enum(["carryover", "elective", "extra", "cross_level", "other"])
+        .optional()
+        .default("extra")
+        .transform((k) => (k === "cross_level" || k === "other" ? "extra" : k)),
+
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
