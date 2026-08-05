@@ -93,8 +93,11 @@ function OnboardingPage() {
       }),
     onSuccess: () => {
       toast.success("Profile saved");
+      qc.invalidateQueries({ queryKey: ["my-profile"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-v2"] });
       navigate({ to: "/dashboard" });
     },
+
     onError: (e: Error) => toast.error(e.message),
   });
 
