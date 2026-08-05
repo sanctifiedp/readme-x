@@ -68,16 +68,37 @@ export const getPersonalizedDashboard = createServerFn({ method: "GET" })
     const extraIds = new Set((extraRes.data ?? []).map((r) => r.course_id));
     const excluded = new Set([...pinnedIds, ...extraIds]);
 
-    let recQuery = supabaseAdmin
-      .from("courses")
-      .select("id, code, title, description, school, department, level")
-      .limit(24);
-    if (profile.school) recQuery = recQuery.ilike("school", `%${profile.school}%`);
-    if (profile.department) recQuery = recQuery.ilike("department", `%${profile.department}%`);
-    if (profile.level) recQuery = recQuery.ilike("level", `%${profile.level}%`);
-    const { data: recData } = await recQuery;
+    // Recommended: primarily school + level (department codes vary widely and
+    // over-filtering here was returning nothing). Department matches float to top.
+    const levelDigits = (profile.level ?? "").match(/\d+/)?.[0] ?? "";
+    const buildRec = (opts: { school: boolean; level: boolean }) => {
+      let q = supabaseAdmin
+        .from("courses")
+        .select("id, code, title, description, school, department, level")
+        .limit(48);
+      if (opts.school && profile.school) q = q.ilike("school", `%${profile.school.trim()}%`);
+      if (opts.level && levelDigits) q = q.ilike("level", `%${levelDigits}%`);
+      return q;
+    };
 
-    const recommended = (recData ?? []).filter((c) => !excluded.has(c.id)).slice(0, 12) as CourseRow[];
+    let { data: recData } = await buildRec({ school: true, level: true });
+    if (!recData || recData.length === 0) {
+      ({ data: recData } = await buildRec({ school: true, level: false }));
+    }
+    if (!recData || recData.length === 0) {
+      ({ data: recData } = await buildRec({ school: false, level: false }));
+    }
+
+    const dept = (profile.department ?? "").trim().toLowerCase();
+    const recommended = (recData ?? [])
+      .filter((c) => !excluded.has(c.id))
+      .sort((a, b) => {
+        const score = (c: { department: string | null }) =>
+          dept && (c.department ?? "").trim().toLowerCase() === dept ? 0 : 1;
+        return score(a) - score(b);
+      })
+      .slice(0, 12) as CourseRow[];
+
 
     // Today's XP + rank (all-time, global)
     const todayStart = new Date();
