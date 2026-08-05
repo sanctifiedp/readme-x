@@ -112,7 +112,7 @@ function SettingsPage() {
     onSuccess: () => {
       toast.success("Settings saved");
       qc.invalidateQueries({ queryKey: ["my-profile"] });
-      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-v2"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
