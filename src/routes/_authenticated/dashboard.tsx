@@ -139,7 +139,7 @@ function AddCourseDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
-  const [kind, setKind] = useState<"carryover" | "elective" | "cross_level" | "other">("other");
+  const [kind, setKind] = useState<"carryover" | "elective" | "extra">("extra");
   const searchFn = useServerFn(searchCoursesForAdd);
   const addFn = useServerFn(addExtraCourse);
 
@@ -165,35 +165,34 @@ function AddCourseDialog({
           <Plus className="h-4 w-4" /> Add course
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg w-[calc(100vw-1.5rem)] sm:w-full max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Add a course</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="whitespace-normal break-words">
             Carry-over, elective, or a cross-level course you're taking.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-3">
-          <div className="grid grid-cols-[1fr_auto] gap-2">
-            <div className="relative">
+        <div className="space-y-3 flex-1 min-h-0 flex flex-col">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search by code or title…"
-                className="pl-9"
+                className="pl-9 h-11 sm:h-10"
               />
             </div>
             <Select value={kind} onValueChange={(v) => setKind(v as typeof kind)}>
-              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[150px] h-11 sm:h-10"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="carryover">Carry-over</SelectItem>
                 <SelectItem value="elective">Elective</SelectItem>
-                <SelectItem value="cross_level">Cross-level</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                <SelectItem value="extra">Cross-level / other</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <div className="max-h-72 overflow-y-auto rounded-md border border-border divide-y divide-border">
+          <div className="flex-1 min-h-[8rem] max-h-72 overflow-y-auto rounded-md border border-border divide-y divide-border">
             {isFetching ? (
               <div className="px-3 py-4 text-sm text-muted-foreground">Searching…</div>
             ) : (results ?? []).length === 0 ? (
@@ -202,16 +201,17 @@ function AddCourseDialog({
               (results ?? []).map((c) => {
                 const already = excludeIds.has(c.id);
                 return (
-                  <div key={c.id} className="flex items-center gap-2 px-3 py-2">
+                  <div key={c.id} className="flex items-center gap-3 px-3 py-3">
                     <div className="flex-1 min-w-0">
                       <div className="font-mono text-xs text-muted-foreground">{c.code}</div>
-                      <div className="text-sm font-medium truncate">{c.title}</div>
-                      <div className="text-[11px] text-muted-foreground truncate">
+                      <div className="text-sm font-medium break-words">{c.title}</div>
+                      <div className="text-[11px] text-muted-foreground break-words">
                         {[c.department, c.level].filter(Boolean).join(" · ")}
                       </div>
                     </div>
                     <Button
                       size="sm"
+                      className="shrink-0 h-9 px-4"
                       variant={already ? "ghost" : "default"}
                       disabled={already || addMut.isPending}
                       onClick={() => addMut.mutate(c.id)}
@@ -224,6 +224,7 @@ function AddCourseDialog({
             )}
           </div>
         </div>
+
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)}>Done</Button>
         </DialogFooter>

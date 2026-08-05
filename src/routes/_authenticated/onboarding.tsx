@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, MailWarning, CheckCircle2, GraduationCap } from "lucide-react";
@@ -29,6 +29,7 @@ export const Route = createFileRoute("/_authenticated/onboarding")({
 
 function OnboardingPage() {
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const session = useSessionUser();
   const profileFn = useServerFn(getMyProfile);
   const saveFn = useServerFn(updateMyProfile);
@@ -93,8 +94,11 @@ function OnboardingPage() {
       }),
     onSuccess: () => {
       toast.success("Profile saved");
+      qc.invalidateQueries({ queryKey: ["my-profile"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-v2"] });
       navigate({ to: "/dashboard" });
     },
+
     onError: (e: Error) => toast.error(e.message),
   });
 
