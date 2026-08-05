@@ -139,7 +139,7 @@ function AddCourseDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
-  const [kind, setKind] = useState<"carryover" | "elective" | "cross_level" | "other">("other");
+  const [kind, setKind] = useState<"carryover" | "elective" | "extra">("extra");
   const searchFn = useServerFn(searchCoursesForAdd);
   const addFn = useServerFn(addExtraCourse);
 
