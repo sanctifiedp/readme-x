@@ -5,6 +5,7 @@ import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Loader2, Send, Sparkles, Timer, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { QuestionImage } from "@/components/QuestionImage";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getAttempt, submitAttempt, saveAnswer } from "@/lib/exam.functions";
 import { getHint } from "@/lib/practice.functions";
@@ -245,6 +246,7 @@ function ExamPage() {
             </div>
           </div>
           <p className="mt-2 text-lg font-medium leading-relaxed">{q.prompt}</p>
+          <QuestionImage url={(q as { imageUrl?: string | null }).imageUrl} />
 
           <div className="mt-5 space-y-2">
             {q.options.map((opt, i) => {

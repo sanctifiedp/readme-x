@@ -8,6 +8,7 @@ import {
   CheckCircle2, XCircle, UserPlus, RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { QuestionImage } from "@/components/QuestionImage";
 import { SiteHeader } from "@/components/SiteHeader";
 import { startGuestExam, gradeGuestExam, getHintPublic } from "@/lib/guest.functions";
 import { useSessionUser } from "@/hooks/useSessionUser";
@@ -212,6 +213,7 @@ function GuestExamPage() {
                     : <XCircle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />}
                   <div className="min-w-0">
                     <p className="font-medium">{i + 1}. {q.prompt}</p>
+                    <QuestionImage url={(q as { imageUrl?: string | null }).imageUrl} />
                     <ul className="mt-2 space-y-1 text-sm">
                       {q.options.map((opt, oi) => (
                         <li
@@ -320,6 +322,7 @@ function GuestExamPage() {
             Question {idx + 1} of {total}
           </div>
           <p className="mt-2 text-lg font-medium leading-relaxed">{q.prompt}</p>
+          <QuestionImage url={(q as { imageUrl?: string | null }).imageUrl} />
 
           <div className="mt-5 space-y-2">
             {q.options.map((opt, i) => {
