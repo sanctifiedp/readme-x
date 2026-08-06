@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getResults } from "@/lib/exam.functions";
+import { QuestionImage } from "@/components/QuestionImage";
 
 export const Route = createFileRoute("/_authenticated/results/$attemptId")({
   component: ResultsPage,
@@ -74,6 +75,7 @@ function ResultsPage() {
                 </span>
                 <div className="flex-1">
                   <p className="font-medium">{q.prompt}</p>
+                  <QuestionImage url={(q as { imageUrl?: string | null }).imageUrl} />
                   <div className="mt-3 space-y-1.5">
                     {q.options.map((opt, oi) => {
                       const isCorrect = oi === q.correctIndex;

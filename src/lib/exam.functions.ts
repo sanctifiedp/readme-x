@@ -46,7 +46,7 @@ export const getAttempt = createServerFn({ method: "POST" })
 
     const ids = attempt.question_ids as string[];
     const [{ data: questions }, { data: savedAnswers }] = await Promise.all([
-      supabaseAdmin.from("questions").select("id, prompt, options").in("id", ids),
+      supabaseAdmin.from("questions").select("id, prompt, options, image_path").in("id", ids),
       supabaseAdmin
         .from("attempt_answers")
         .select("question_id, chosen_index")
@@ -55,7 +55,10 @@ export const getAttempt = createServerFn({ method: "POST" })
 
     const ordered = ids
       .map((id) => questions?.find((q) => q.id === id))
-      .filter(Boolean) as Array<{ id: string; prompt: string; options: unknown }>;
+      .filter(Boolean) as Array<{ id: string; prompt: string; options: unknown; image_path: string | null }>;
+
+    const { resolveQuestionImageUrls } = await import("./question-media.server");
+    const imageUrls = await resolveQuestionImageUrls(ordered.map((q) => q.image_path));
 
     const answers: Record<string, number> = {};
     for (const a of savedAnswers ?? []) {
@@ -81,6 +84,7 @@ export const getAttempt = createServerFn({ method: "POST" })
         id: q.id,
         prompt: q.prompt,
         options: q.options as string[],
+        imageUrl: q.image_path ? imageUrls[q.image_path] ?? null : null,
       })),
       answers,
     };
@@ -311,12 +315,15 @@ export const getResults = createServerFn({ method: "POST" })
     const ids = attempt.question_ids as string[];
     const { data: questions } = await supabaseAdmin
       .from("questions")
-      .select("id, prompt, options, correct_index, hint")
+      .select("id, prompt, options, correct_index, hint, explanation, image_path")
       .in("id", ids);
     const { data: answers } = await supabaseAdmin
       .from("attempt_answers")
       .select("question_id, chosen_index, is_correct")
       .eq("attempt_id", data.attemptId);
+
+    const { resolveQuestionImageUrls: resolveResultImages } = await import("./question-media.server");
+    const resultImageUrls = await resolveResultImages((questions ?? []).map((q) => q.image_path));
 
     return {
       attempt: {
@@ -330,6 +337,7 @@ export const getResults = createServerFn({ method: "POST" })
       },
       questions: ids.map((id) => {
         const q = questions?.find((x) => x.id === id);
+        const imageUrl = q?.image_path ? resultImageUrls[q.image_path] ?? null : null;
         const a = answers?.find((x) => x.question_id === id);
         return {
           id,
@@ -339,6 +347,8 @@ export const getResults = createServerFn({ method: "POST" })
           chosenIndex: a?.chosen_index ?? null,
           isCorrect: a?.is_correct ?? false,
           hint: q?.hint ?? null,
+          explanation: q?.explanation ?? null,
+          imageUrl,
         };
       }),
     };
