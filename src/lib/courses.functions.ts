@@ -111,36 +111,204 @@ export const getCourseBank = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ courseId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
+    const { resolveQuestionImageUrls } = await import("./question-media.server");
     const { data: course, error } = await supabaseAdmin
       .from("courses").select("id, code, title, school, department, level").eq("id", data.courseId).single();
     if (error || !course) throw new Error("Course not found");
     const { data: questions } = await supabaseAdmin
       .from("questions")
-      .select("id, prompt, options, correct_index, hint, created_at")
+      .select("id, prompt, options, correct_index, hint, explanation, image_path, question_type, created_at")
       .eq("course_id", data.courseId)
       .order("created_at");
-    return { course, questions: questions ?? [], max: MAX_PER_COURSE };
+    const rows = questions ?? [];
+    const urls = await resolveQuestionImageUrls(rows.map((q) => q.image_path));
+    return {
+      course,
+      questions: rows.map((q) => ({
+        id: q.id,
+        prompt: q.prompt,
+        options: (q.options as string[]) ?? [],
+        correct_index: q.correct_index,
+        hint: q.hint,
+        explanation: q.explanation ?? null,
+        questionType: q.question_type ?? "mcq_single",
+        imageUrl: q.image_path ? urls[q.image_path] ?? null : null,
+        hasImage: !!q.image_path,
+        created_at: q.created_at,
+      })),
+      max: MAX_PER_COURSE,
+    };
+  });
+
+const questionDraftSchema = z.object({
+  courseId: z.string().uuid(),
+  prompt: z.string().trim().min(3).max(4000),
+  options: z.array(z.string().trim().min(1).max(500)).min(2).max(6),
+  correctIndex: z.number().int().min(0).max(5),
+  explanation: z.string().trim().max(2000).optional().nullable(),
+  questionType: z.enum(["mcq_single"]).default("mcq_single"),
+  /** New upload as a base64 data URL, "" / null to keep, "remove" handled separately. */
+  imageDataUrl: z.string().max(8_000_000).optional().nullable(),
+});
+
+function assertDraft(d: { options: string[]; correctIndex: number }) {
+  if (d.correctIndex >= d.options.length) throw new Error("Select a correct answer.");
+  const seen = new Set<string>();
+  for (const o of d.options) {
+    const key = o.trim().toLowerCase();
+    if (seen.has(key)) throw new Error("Options must be unique.");
+    seen.add(key);
+  }
+}
+
+/**
+ * Duplicate scan restricted to the same course bank. Similarity is computed with a
+ * local scorer (see question-similarity.ts) so this stays cheap as banks grow.
+ */
+export const checkQuestionDuplicates = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      courseId: z.string().uuid(),
+      prompt: z.string().trim().min(1).max(4000),
+      options: z.array(z.string()).min(1).max(6),
+      correctIndex: z.number().int().min(0).max(5),
+      hasImage: z.boolean().default(false),
+      excludeId: z.string().uuid().optional(),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { compareQuestions, SIMILARITY_THRESHOLD } = await import("./question-similarity");
+    const { resolveQuestionImageUrls } = await import("./question-media.server");
+
+    const { data: existing } = await supabaseAdmin
+      .from("questions")
+      .select("id, prompt, options, correct_index, explanation, image_path")
+      .eq("course_id", data.courseId);
+
+    const candidate = {
+      prompt: data.prompt,
+      options: data.options,
+      correctIndex: data.correctIndex,
+      hasImage: data.hasImage,
+    };
+
+    const scored = (existing ?? [])
+      .filter((q) => q.id !== data.excludeId)
+      .map((q) => ({
+        q,
+        cmp: compareQuestions(candidate, {
+          prompt: q.prompt,
+          options: (q.options as string[]) ?? [],
+          correctIndex: q.correct_index,
+          hasImage: !!q.image_path,
+        }),
+      }))
+      .filter((r) => r.cmp.score >= SIMILARITY_THRESHOLD)
+      .sort((a, b) => b.cmp.score - a.cmp.score)
+      .slice(0, 3);
+
+    const urls = await resolveQuestionImageUrls(scored.map((s) => s.q.image_path));
+
+    return {
+      threshold: SIMILARITY_THRESHOLD,
+      matches: scored.map((s) => ({
+        id: s.q.id,
+        prompt: s.q.prompt,
+        options: (s.q.options as string[]) ?? [],
+        correctIndex: s.q.correct_index,
+        explanation: s.q.explanation ?? null,
+        imageUrl: s.q.image_path ? urls[s.q.image_path] ?? null : null,
+        similarity: Math.round(s.cmp.score * 100),
+        promptSimilarity: Math.round(s.cmp.promptScore * 100),
+        optionsSimilarity: Math.round(s.cmp.optionsScore * 100),
+        sameCorrectAnswer: s.cmp.sameCorrectAnswer,
+      })),
+    };
   });
 
 export const addCourseQuestion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({
-      courseId: z.string().uuid(),
-      prompt: z.string().trim().min(3).max(2000),
-      options: z.array(z.string().trim().min(1).max(500)).length(4),
-      correctIndex: z.number().int().min(0).max(3),
+    questionDraftSchema.extend({
+      /** When set, this existing question is replaced (admin-confirmed) instead of adding a new one. */
+      replaceQuestionId: z.string().uuid().optional().nullable(),
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
-    const { error } = await supabaseAdmin.from("questions").insert({
+    assertDraft(data);
+    const { uploadQuestionImage, deleteQuestionImage } = await import("./question-media.server");
+
+    const imagePath = data.imageDataUrl
+      ? await uploadQuestionImage(data.courseId, data.imageDataUrl)
+      : null;
+
+    const payload = {
       course_id: data.courseId,
       prompt: data.prompt,
       options: data.options,
       correct_index: data.correctIndex,
-    });
+      explanation: data.explanation?.trim() ? data.explanation.trim() : null,
+      question_type: data.questionType,
+      image_path: imagePath,
+      hint: null,
+    };
+
+    if (data.replaceQuestionId) {
+      // Explicit admin confirmation only — update in place so exams keep working.
+      const { data: old } = await supabaseAdmin
+        .from("questions").select("image_path").eq("id", data.replaceQuestionId).single();
+      const { error } = await supabaseAdmin
+        .from("questions")
+        .update(payload)
+        .eq("id", data.replaceQuestionId)
+        .eq("course_id", data.courseId);
+      if (error) throw new Error(error.message);
+      if (old?.image_path && old.image_path !== imagePath) await deleteQuestionImage(old.image_path);
+      return { ok: true, replaced: true as const };
+    }
+
+    const { error } = await supabaseAdmin.from("questions").insert(payload);
     if (error) throw new Error(error.message);
+    return { ok: true, replaced: false as const };
+  });
+
+export const updateCourseQuestion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    questionDraftSchema.extend({
+      id: z.string().uuid(),
+      removeImage: z.boolean().default(false),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    assertDraft(data);
+    const { uploadQuestionImage, deleteQuestionImage } = await import("./question-media.server");
+
+    const { data: old } = await supabaseAdmin
+      .from("questions").select("image_path").eq("id", data.id).single();
+
+    let imagePath = old?.image_path ?? null;
+    if (data.imageDataUrl) imagePath = await uploadQuestionImage(data.courseId, data.imageDataUrl);
+    else if (data.removeImage) imagePath = null;
+
+    const { error } = await supabaseAdmin
+      .from("questions")
+      .update({
+        prompt: data.prompt,
+        options: data.options,
+        correct_index: data.correctIndex,
+        explanation: data.explanation?.trim() ? data.explanation.trim() : null,
+        question_type: data.questionType,
+        image_path: imagePath,
+      })
+      .eq("id", data.id)
+      .eq("course_id", data.courseId);
+    if (error) throw new Error(error.message);
+    if (old?.image_path && old.image_path !== imagePath) await deleteQuestionImage(old.image_path);
     return { ok: true };
   });
 
@@ -149,7 +317,12 @@ export const deleteCourseQuestion = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
+    const { deleteQuestionImage } = await import("./question-media.server");
+    const { data: old } = await supabaseAdmin
+      .from("questions").select("image_path").eq("id", data.id).single();
     const { error } = await supabaseAdmin.from("questions").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
+    await deleteQuestionImage(old?.image_path);
     return { ok: true };
   });
+
