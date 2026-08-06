@@ -756,10 +756,14 @@ export type Database = {
           course_id: string | null
           created_at: string
           exam_id: string | null
+          explanation: string | null
           hint: string | null
           id: string
+          image_path: string | null
+          metadata: Json
           options: Json
           prompt: string
+          question_type: string
           source_material_id: string | null
         }
         Insert: {
@@ -767,10 +771,14 @@ export type Database = {
           course_id?: string | null
           created_at?: string
           exam_id?: string | null
+          explanation?: string | null
           hint?: string | null
           id?: string
+          image_path?: string | null
+          metadata?: Json
           options: Json
           prompt: string
+          question_type?: string
           source_material_id?: string | null
         }
         Update: {
@@ -778,10 +786,14 @@ export type Database = {
           course_id?: string | null
           created_at?: string
           exam_id?: string | null
+          explanation?: string | null
           hint?: string | null
           id?: string
+          image_path?: string | null
+          metadata?: Json
           options?: Json
           prompt?: string
+          question_type?: string
           source_material_id?: string | null
         }
         Relationships: [
