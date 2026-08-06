@@ -46,7 +46,7 @@ export const startGuestExam = createServerFn({ method: "POST" })
 
     const { data: questions, error } = await supabaseAdmin
       .from("questions")
-      .select("id, prompt, options")
+      .select("id, prompt, options, image_path")
       .eq("course_id", data.courseId);
     if (error) throw new Error(error.message);
     if (!questions || questions.length === 0) {
@@ -57,6 +57,9 @@ export const startGuestExam = createServerFn({ method: "POST" })
       .sort(() => Math.random() - 0.5)
       .slice(0, Math.min(data.count, questions.length));
 
+    const { resolveQuestionImageUrls } = await import("./question-media.server");
+    const imageUrls = await resolveQuestionImageUrls(picked.map((q) => q.image_path));
+
     return {
       courseId: course.id,
       courseCode: course.code,
@@ -66,6 +69,7 @@ export const startGuestExam = createServerFn({ method: "POST" })
         id: q.id,
         prompt: q.prompt,
         options: q.options as string[],
+        imageUrl: q.image_path ? imageUrls[q.image_path] ?? null : null,
       })),
     };
   });
@@ -96,10 +100,13 @@ export const gradeGuestExam = createServerFn({ method: "POST" })
 
     const { data: rows, error } = await supabaseAdmin
       .from("questions")
-      .select("id, prompt, options, correct_index, hint, course_id")
+      .select("id, prompt, options, correct_index, hint, explanation, image_path, course_id")
       .in("id", ids)
       .eq("course_id", data.courseId);
     if (error) throw new Error(error.message);
+
+    const { resolveQuestionImageUrls: resolveGuestImages } = await import("./question-media.server");
+    const guestImageUrls = await resolveGuestImages((rows ?? []).map((r) => r.image_path));
 
     const byId = new Map((rows ?? []).map((r) => [r.id, r]));
     const detail = data.answers
@@ -114,6 +121,8 @@ export const gradeGuestExam = createServerFn({ method: "POST" })
           chosenIndex: a.chosenIndex < 0 ? null : a.chosenIndex,
           isCorrect: a.chosenIndex === q.correct_index,
           hint: q.hint ?? null,
+          explanation: q.explanation ?? null,
+          imageUrl: q.image_path ? guestImageUrls[q.image_path] ?? null : null,
         };
       })
       .filter(Boolean) as Array<{
@@ -124,6 +133,8 @@ export const gradeGuestExam = createServerFn({ method: "POST" })
       chosenIndex: number | null;
       isCorrect: boolean;
       hint: string | null;
+      explanation: string | null;
+      imageUrl: string | null;
     }>;
 
     return {
