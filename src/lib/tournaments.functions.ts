@@ -137,12 +137,14 @@ export const getTournament = createServerFn({ method: "POST" })
     await maybeFinalize(data.id);
     const { data: t, error } = await supabaseAdmin
       .from("tournaments")
-      .select("*, courses(code, title)")
+      .select(
+        "id, title, description, status, prize_amount, question_count, duration_seconds, registration_open, starts_at, ends_at, min_participants, target_school, target_department, target_level, winner_decided_at, courses(code, title)",
+      )
       .eq("id", data.id).single();
     if (error || !t) throw new Error("Tournament not found");
     const [{ count: regCount }, { data: winnerRow }] = await Promise.all([
       supabaseAdmin.from("tournament_registrations").select("id", { count: "exact", head: true }).eq("tournament_id", data.id),
-      supabaseAdmin.from("tournament_winners").select("id, user_id, prize_amount, payout_status, decided_at").eq("tournament_id", data.id).maybeSingle(),
+      supabaseAdmin.from("tournament_winners").select("id, prize_amount, payout_status, decided_at, user_id").eq("tournament_id", data.id).maybeSingle(),
     ]);
     let winner: (typeof winnerRow & { winner_name: string | null }) | null = null;
     if (winnerRow) {
