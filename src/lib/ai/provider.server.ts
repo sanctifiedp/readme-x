@@ -193,12 +193,11 @@ const providers: Record<string, () => AiProvider> = {
 
 export function resolveProvider(): AiProvider {
   const requested = process.env["AI_TUTOR_PROVIDER"];
-  const factory = requested ? providers[requested] : undefined;
-  return factory ?? providers["lovable"]!;
+  const factory = (requested ? providers[requested] : undefined) ?? providers["lovable"]!;
+  return factory();
 }
 
 /** Single entry point every AI feature should call. */
 export async function runCompletion(input: AiCompletionInput): Promise<TutorResponse> {
-  const provider = resolveProvider()();
-  return provider.complete(input);
+  return resolveProvider().complete(input);
 }
