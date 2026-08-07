@@ -1,15 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
+import { z } from "zod";
 import { Bot, Loader2, Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { SiteHeader } from "@/components/SiteHeader";
+import { MarkdownMessage } from "@/components/MarkdownMessage";
 import { askTutor } from "@/lib/tutor.functions";
-import { STARTER_PROMPTS, type AiMessage } from "@/lib/ai/types";
+import { STARTER_PROMPTS, TUTOR_LIMITS, type AiMessage } from "@/lib/ai/types";
+
+const SearchSchema = z.object({
+  courseId: z.string().uuid().optional(),
+  questionId: z.string().uuid().optional(),
+  attemptId: z.string().uuid().optional(),
+  /** Prefilled first message, e.g. from an "Ask AI" button in question review. */
+  ask: z.string().max(TUTOR_LIMITS.maxMessageChars).optional(),
+});
 
 export const Route = createFileRoute("/_authenticated/tutor")({
+  validateSearch: (search) => SearchSchema.parse(search),
   head: () => ({
     meta: [
       { title: "AI Tutor — ReadMe" },
@@ -27,12 +38,16 @@ export const Route = createFileRoute("/_authenticated/tutor")({
 });
 
 function TutorPage() {
+  const { courseId, questionId, attemptId, ask: prefill } = Route.useSearch();
   const [messages, setMessages] = useState<AiMessage[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const autoSent = useRef(false);
   const ask = useServerFn(askTutor);
+
+  const surface = questionId ? "post_exam_explanation" : "tutor_page";
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -43,22 +58,41 @@ function TutorPage() {
   }, [messages, sending]);
 
   const send = async (raw: string) => {
-    const content = raw.trim();
+    const content = raw.trim().slice(0, TUTOR_LIMITS.maxMessageChars);
     if (!content || sending) return;
     const next: AiMessage[] = [...messages, { role: "user", content }];
     setMessages(next);
     setText("");
     setSending(true);
     try {
-      const res = await ask({ data: { surface: "tutor_page", messages: next } });
+      const res = await ask({
+        data: {
+          surface,
+          messages: next.slice(-TUTOR_LIMITS.maxMessages),
+          courseId: courseId ?? null,
+          questionId: questionId ?? null,
+          attemptId: attemptId ?? null,
+        },
+      });
       setMessages((m) => [...m, { role: "assistant", content: res.reply }]);
     } catch (e) {
-      toast.error((e as Error).message || "Could not reach the AI Tutor.");
+      const msg = (e as Error).message;
+      toast.error(msg && msg.length < 200 ? msg : "Could not reach the AI Tutor. Please try again.");
+      setMessages((m) => m.slice(0, -1));
+      setText(content);
     } finally {
       setSending(false);
       inputRef.current?.focus();
     }
   };
+
+  // Auto-send the question that came from "Ask AI" in question review.
+  useEffect(() => {
+    if (autoSent.current || !prefill?.trim()) return;
+    autoSent.current = true;
+    void send(prefill);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefill]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -105,15 +139,15 @@ function TutorPage() {
                     <Bot className="h-4 w-4" />
                   </span>
                 )}
-                <div
-                  className={
-                    m.role === "user"
-                      ? "max-w-[85%] rounded-2xl rounded-br-sm bg-primary px-3.5 py-2.5 text-sm text-primary-foreground whitespace-pre-wrap break-words"
-                      : "max-w-[85%] text-sm text-foreground whitespace-pre-wrap break-words leading-relaxed"
-                  }
-                >
-                  {m.content}
-                </div>
+                {m.role === "user" ? (
+                  <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-primary px-3.5 py-2.5 text-sm text-primary-foreground whitespace-pre-wrap break-words">
+                    {m.content}
+                  </div>
+                ) : (
+                  <div className="max-w-[85%] min-w-0 text-foreground">
+                    <MarkdownMessage content={m.content} />
+                  </div>
+                )}
               </div>
             ))}
 
@@ -145,6 +179,7 @@ function TutorPage() {
             <Textarea
               ref={inputRef}
               value={text}
+              maxLength={TUTOR_LIMITS.maxMessageChars}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
@@ -163,7 +198,8 @@ function TutorPage() {
         </div>
 
         <p className="pt-3 text-xs text-muted-foreground">
-          AI Tutor is in preparation — replies are placeholders until the tutor goes live.
+          AI Tutor explains concepts using your course context. It can make mistakes — always double-check against your
+          course material.
         </p>
       </main>
     </div>
