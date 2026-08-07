@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, CheckCircle2, XCircle, Award, Sparkles, Clock } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Award, Sparkles, Clock, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -98,6 +98,28 @@ function ResultsPage() {
                         </div>
                       );
                     })}
+                  </div>
+                  {q.explanation && (
+                    <div className="mt-3 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
+                      <span className="font-semibold">Explanation: </span>
+                      {q.explanation}
+                    </div>
+                  )}
+                  <div className="mt-3">
+                    <Link
+                      to="/tutor"
+                      search={{
+                        attemptId,
+                        questionId: q.id,
+                        ask: q.isCorrect
+                          ? "Explain this question and why the correct answer is right."
+                          : "Why is my answer wrong for this question?",
+                      }}
+                    >
+                      <Button variant="outline" size="sm" className="gap-1.5">
+                        <Bot className="h-4 w-4" /> {q.isCorrect ? "Explain with AI" : "Ask AI why"}
+                      </Button>
+                    </Link>
                   </div>
                   {q.hint && (
                     <div className="mt-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm flex items-start gap-2">
